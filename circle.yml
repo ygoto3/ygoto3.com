@@ -1,3 +1,8 @@
+general:
+  branches:
+    only:
+      - master
+
 machine:
   timezone:
     Asia/Tokyo
@@ -16,7 +21,7 @@ deployment:
   production:
     branch: master
     commands:
-      - git config --global user.name "ygoto3"
+      - git config --global user.name "Circle CI"
       - git config --global user.email "my.important.apes@gmail.com"
       - npm run update
       - npm run build

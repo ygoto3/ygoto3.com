@@ -70,7 +70,7 @@ theme: ygoto3
 ## Docs: http://hexo.io/docs/deployment.html
 deploy:
   type: git
-  repo: https://github.com/ygoto3/ygoto3.com.git
+  repo: git@github.com:ygoto3/ygoto3.com.git
   branch: gh-pages
 
 # Feed
