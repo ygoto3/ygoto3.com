@@ -1,0 +1,28 @@
+{
+  "name": "ygoto3.com",
+  "version": "0.0.1",
+  "private": true,
+  "hexo": {
+    "version": "3.1.1"
+  },
+  "scripts": {
+    "init": "npm install",
+    "server": "$(npm bin)/hexo server",
+    "update": "git submodule init && git submodule update && git submodule foreach npm install && git submodule foreach npm run build:production",
+    "build": "$(npm bin)/hexo clean && $(npm bin)/hexo generate",
+    "deploy": "$(npm bin)/hexo deploy"
+  },
+  "author": "Yusuke Goto",
+  "dependencies": {
+    "hexo": "^3.1.0",
+    "hexo-deployer-git": "0.0.4",
+    "hexo-generator-archive": "^0.1.2",
+    "hexo-generator-category": "^0.1.2",
+    "hexo-generator-feed": "^1.0.3",
+    "hexo-generator-index": "^0.1.2",
+    "hexo-generator-tag": "^0.1.1",
+    "hexo-renderer-jade": "^0.1.0",
+    "hexo-renderer-markdown-it": "^3.4.0",
+    "hexo-server": "^0.1.2"
+  }
+}

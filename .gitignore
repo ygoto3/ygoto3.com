@@ -1,0 +1,10 @@
+# OS X files
+.DS_Store
+Thumbs.db
+
+# Generated files
+db.json
+*.log
+node_modules/
+public/
+.deploy*/

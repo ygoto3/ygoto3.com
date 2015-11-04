@@ -1,0 +1,27 @@
+machine:
+  timezone:
+    Asia/Tokyo
+  node:
+    version: 5.0.0
+
+dependencies:
+  override:
+    - npm run init
+
+test:
+  override:
+    - exit 0
+
+deployment:
+  production:
+    branch: master
+    commands:
+      - git config --global user.name "Circle CI"
+      - git config --global user.email "my.important.apes@gmail.com"
+      - git submodule init
+      - git submodule update
+      - git submodule foreach npm install
+      - git submodule foreach npm run build:production
+      - $(npm bin)/hexo clean
+      - $(npm bin)/hexo generate
+      - $(npm bin)/hexo deploy

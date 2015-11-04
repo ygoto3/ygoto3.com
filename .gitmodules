@@ -1,0 +1,3 @@
+[submodule "themes/ygoto3"]
+	path = themes/ygoto3
+	url = https://github.com/ygoto3/hexo-theme-ygoto3.git
