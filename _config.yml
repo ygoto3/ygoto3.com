@@ -87,3 +87,7 @@ feed:
 sitemap:
   path: sitemap.xml
 
+# Miscellaneous
+twitter_card: summary
+twitter_id: ygoto3_
+fb_app_id: 777030512429159
