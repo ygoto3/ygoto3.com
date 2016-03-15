@@ -65,8 +65,6 @@ pagination_dir: page
 ## Themes: http://hexo.io/themes/
 ## theme: apollo
 theme: ygoto3
-plugins:
-  - hexo-generator-cname
 
 # Deployment
 ## Docs: http://hexo.io/docs/deployment.html
