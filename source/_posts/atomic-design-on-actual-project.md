@@ -6,7 +6,7 @@ tags:
   - Atomic Design
 ---
 
-ここ半年弱開発していたある動画サービスをベータ版ながらリリースしました（正式リリースは 4 月）。そのサービスの開発において、以前投稿した [Atomic Design](http://bradfrost.com/blog/post/atomic-web-design/) を採用しました。本記事では Atomic Design を実案件に導入した結果と感想を書いていきます。
+ここ半年開発していたある動画サービスをベータ版ながらリリースしました（正式リリースは 4 月）。そのサービスの開発において、以前投稿した [Atomic Design](http://bradfrost.com/blog/post/atomic-web-design/) を採用しました。本記事では Atomic Design を実案件に導入した結果と感想を書いていきます。
 
 Atomic Design の基本的な概念に関して知りたい方は [Brad Frost](https://twitter.com/brad_frost) 氏の[原文](http://bradfrost.com/blog/post/atomic-web-design/) もしくは私の以前の記事↓を参照できます。
 
