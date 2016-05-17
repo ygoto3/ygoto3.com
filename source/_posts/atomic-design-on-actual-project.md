@@ -6,9 +6,9 @@ tags:
   - Atomic Design
 ---
 
-ここ半年開発していたある動画サービスをベータ版ながらリリースしました（正式リリースは 4 月）。そのサービスの開発において、以前投稿した [Atomic Design](http://bradfrost.com/blog/post/atomic-web-design/) を採用しました。本記事では Atomic Design を実案件に導入した結果と感想を書いていきます。
+ここ半年開発していた[動画サービス](https://abema.tv/)をベータ版ながらリリースしました（正式リリースは 4 月）。そのサービスの開発において、以前投稿した [Atomic Design](http://bradfrost.com/blog/post/atomic-web-design/) を採用しました。本記事では Atomic Design を実案件に導入した結果と感想を書いていきます。
 
-Atomic Design の基本的な概念に関して知りたい方は [Brad Frost](https://twitter.com/brad_frost) 氏の[原文](http://bradfrost.com/blog/post/atomic-web-design/) もしくは私の以前の記事↓を参照できます。
+Atomic Design の基本的な概念に関して知りたい方は [Brad Frost](https://twitter.com/brad_frost) 氏の[原文](http://bradfrost.com/blog/post/atomic-web-design/)、もしくは私の以前の記事↓を参照できます。
 
 [最近よくクリエイターが移住するカナダで Atomic Design を学ぶ](http://ygoto3.com/posts/smashing-conference-whistler-and-atomic-design/)
 
@@ -26,7 +26,7 @@ Atomic Design を導入する目的は、デザイン仕様の変更に強く、
 
 内製で自社サービスを開発していることもあり、今回のプロジェクトではデザインの変更は日常的に発生しました。そのためコンポーネントは将来的なデザイン変更を見越した上で、現在のデザインカンプ上に見えるコンテキストにできる限り依存しないように注意してコンポーネントを作ることが重要です。
 
-Atomic Design の 5 つのカテゴライズの中で Atom や Molecule はコンテキストが極めて薄いコンポーネントです。コンポーネントを作る際に常に Atoms や Molecules の粒度で作るとどういうコンポーネントが理想かを意識することが変更に強い UI コンポーネント郡を備えていくことにつながっていきます。
+Atomic Design の 5 つのカテゴライズの中で Atoms や Molecules はコンテキストが極めて薄いコンポーネントです。コンポーネントを作る際に常に Atoms や Molecules の粒度で作るとどういうコンポーネントが理想かを意識することが変更に強い UI コンポーネント郡を備えていくことにつながっていきます。
 
 ## デザイナーに Atomic Design の導入に協力してもらうことの難しさ
 
