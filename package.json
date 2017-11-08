@@ -1,18 +1,20 @@
 {
   "name": "ygoto3.com",
   "version": "0.0.2",
+  "engines": {
+    "node": "8.5.0"
+  },
   "private": true,
   "hexo": {
-    "version": "3.2.0"
+    "version": "3.4.0"
   },
   "scripts": {
-    "init": "npm install",
-    "server": "$(npm bin)/hexo server",
-    "update": "git submodule init && git submodule update && git submodule foreach npm install && git submodule foreach npm run build:production",
-    "build": "$(npm bin)/hexo clean && $(npm bin)/hexo generate",
-    "deploy": "$(npm bin)/hexo deploy"
+    "server": "hexo server",
+    "update": "git submodule init && git submodule update && git submodule foreach yarn && git submodule foreach yarn build:production",
+    "build": "hexo clean && hexo generate",
+    "deploy": "hexo deploy"
   },
-  "author": "Yusuke Goto",
+  "author": "Yusuke Goto <my.important.apes@gmail.com>",
   "dependencies": {
     "hexo": "^3.1.0",
     "hexo-deployer-git": "^0.1.0",
