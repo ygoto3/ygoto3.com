@@ -1,0 +1,119 @@
+<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="description" content="Software engineer at CyberAgent."><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>最近よくクリエイターが移住するカナダで Atomic Design を学ぶ | ygoto3.com</title><meta name="description" content="こちらは Frontrend Advent Calendar 2014 19日目の記事です。 2014年 12月8日〜12月14日の間、カナダに滞在してきました。目的は12月9日〜12日に開催される Smashing Conference 2014 へ参加するためです。 海外のカンファレンスに参加するのはおろか、海外旅行もしたことがないので、今回１人でカナダに行くということで終始緊張の連続でした。">
+<meta name="keywords" content="Atomic Design">
+<meta property="og:type" content="article">
+<meta property="og:title" content="最近よくクリエイターが移住するカナダで Atomic Design を学ぶ">
+<meta property="og:url" content="https://ygoto3.com/posts/smashing-conference-whistler-and-atomic-design/index.html">
+<meta property="og:site_name" content="ygoto3.com">
+<meta property="og:description" content="こちらは Frontrend Advent Calendar 2014 19日目の記事です。 2014年 12月8日〜12月14日の間、カナダに滞在してきました。目的は12月9日〜12日に開催される Smashing Conference 2014 へ参加するためです。 海外のカンファレンスに参加するのはおろか、海外旅行もしたことがないので、今回１人でカナダに行くということで終始緊張の連続でした。">
+<meta property="og:image" content="https://ygoto3.com/images/smashing-conference-whistler-and-atomic-design/vancouver.jpg">
+<meta property="og:image" content="https://ygoto3.com/images/smashing-conference-whistler-and-atomic-design/button.png">
+<meta property="og:image" content="https://ygoto3.com/images/smashing-conference-whistler-and-atomic-design/molecule.png">
+<meta property="og:image" content="https://ygoto3.com/images/smashing-conference-whistler-and-atomic-design/header.png">
+<meta property="og:updated_time" content="2019-02-13T03:11:50.332Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="最近よくクリエイターが移住するカナダで Atomic Design を学ぶ">
+<meta name="twitter:description" content="こちらは Frontrend Advent Calendar 2014 19日目の記事です。 2014年 12月8日〜12月14日の間、カナダに滞在してきました。目的は12月9日〜12日に開催される Smashing Conference 2014 へ参加するためです。 海外のカンファレンスに参加するのはおろか、海外旅行もしたことがないので、今回１人でカナダに行くということで終始緊張の連続でした。">
+<meta name="twitter:image" content="https://ygoto3.com/images/smashing-conference-whistler-and-atomic-design/vancouver.jpg">
+<meta name="twitter:creator" content="@ygoto3_">
+<meta property="fb:app_id" content="777030512429159"><link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.css"><link rel="stylesheet" href="/css/index.css"></head><body class="container"><div id="fb-root"></div><script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.5&appId=777030512429159";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));
+</script><div class="container-introduction"><a href="/"><h1 class="site-title">ygoto3.com</h1></a></div><div class="container-posts"><article class="post"><header><h1 class="post__title">最近よくクリエイターが移住するカナダで Atomic Design を学ぶ</h1></header><div class="post__date">December 19, 2014</div><div class="post__entry"><p>こちらは <a href="http://qiita.com/advent-calendar/2014/frontrend" title="Frontrend Advent Calendar 2014" target="_blank" rel="external">Frontrend Advent Calendar 2014</a> 19日目の記事です。</p>
+<p>2014年 12月8日〜12月14日の間、カナダに滞在してきました。目的は12月9日〜12日に開催される <a href="http://smashingconf.com/whistler-2014/" title="Smashing Conference 2014" target="_blank" rel="external">Smashing Conference 2014</a> へ参加するためです。</p>
+<p>海外のカンファレンスに参加するのはおろか、海外旅行もしたことがないので、今回１人でカナダに行くということで終始緊張の連続でした。（Frontrend の <a href="https://twitter.com/hiloki" title="@hiloki" target="_blank" rel="external">@hiloki</a> さんが「僕も行こうかな」と言っていたので、心強く思っていたのですが、残念ながら叶わず。）</p>
+<p>本記事は、カンファレンスが開催されたカナダという国にまつわるお話を <a href="http://frontrend.github.io/" title="Frontrend" target="_blank" rel="external">Frontrend</a> の話題を交えながら書きつつ、このカンファレンスで一番楽しみにしていたトピックである「Atomic Design」について書いていきます。</p>
+<h3>参加の理由</h3>
+<p>今まで海外カンファレンスなど参加したことがない自分が今回参加を決意した理由は、興味があるスピーカー陣が多くいたことがもちろん１番なのですが、２番目の理由として、今年に入ってからカナダという国そのものに興味を持つようになったからです。</p>
+<p>興味を持ったキッカケは、カンファレンス募集期間の前後、立て続けに日本からカナダに移住する Web クリエイター・エンジニアたちに会ったことです。そのうちの一人が、Mr. Frontrend である <a href="https://twitter.com/t32k" title="@t32k" target="_blank" rel="external">@t32k</a> さんでした。彼のブログ記事「<a href="http://t32k.me/mol/log/p32k/" title="Webエンジニアからみたフィリピン語学留学" target="_blank" rel="external">Webエンジニアからみたフィリピン語学留学</a>」で書いている通り、彼はフィリピンで語学留学した後、現在カナダでエンジニアとして働こうとしています。</p>
+<h3>アメリカに近いという点でのカナダの魅力</h3>
+<p>「偶然なのか、なんだか最近多くの人がカナダに行っている気がするな。」となんとなく思っていました。IT 業界でエンジニアとして働いている者であれば、一度はシリコンバレーで働きたいと願う人も少なくないでしょう。だから、アメリカ合衆国で働きたい、というのは分かります。しかし、なぜカナダなのでしょうか。</p>
+<p>そんな疑問に答えるかのように、<a href="http://frogagent.com/" title="Frog" target="_blank" rel="external">Frog</a> というクリエイターのためのカナダ留学支援団体のサイトにはカナダのバンクーバーについてこんなことが書かれています。</p>
+<ul>
+<li>バンクーバーはシリコンバレーと時差が同じ</li>
+<li>Facebook やアマゾンなどの企業が進出</li>
+<li>カナダで就労して、アメリカの就労ビザを取得したらシリコンバレー就職</li>
+</ul>
+<p>なんともアメリカンドリームに近づけそうなカナダの魅力がそこにはありました。もし普通の日本人がアメリカで働きたいと思ったとしても、アメリカの<a href="http://www.usavisa.jp/howto/faq_visa07.html" title="アメリカ就労ビザ取得は難しい" target="_blank" rel="external">就労ビザ取得は難しく</a>、働きたくても外国人にあたる日本人はなかなか働く許可を得ることが難しいでしょう。それと比較すると、カナダは就労ビザの制度に融通が利きやすいということのようです。</p>
+<p>実際、現地で出会った人の中にもいずれはシリコンバレーで働くことを目標にしている人もいました。</p>
+<h3>カナダ自身の魅力</h3>
+<p><a href="/images/smashing-conference-whistler-and-atomic-design/vancouver.jpg"><img src="/images/smashing-conference-whistler-and-atomic-design/vancouver.jpg" alt="vancouver"></a></p>
+<p>上記のような理由は、カナダ自身というよりはアメリカへのアクセスに対してのカナダの魅力しか示していませんが、実際カナダのバンクーバーに行ってみると、人は優しく、街は綺麗でとても魅力的な国でした。</p>
+<p>私は学生時代に約６年アメリカに住んでいた記憶もあって、カナダに着いたとき、街中の標識や店頭の商品を見てアメリカととても似ているな、と感じたのですが、実際に人と触れ合うと（言い方は悪いですが）アメリカのようなドライさはあまり感じられません。むしろ優しさに溢れていました。</p>
+<p>たとえばロックが開かなくなった荷物について私が空港の人に助けを求めると「私には開け方が分からない」と言いながらもあの手この手で開けようと頑張ってくれたり、カナダに来たばかりで電車の乗車券の買い方１つ分からない私に通りすがりの人がとても丁寧に買い方を説明してくれたり、気候とは裏腹になんだかとても暖かい国だなと感じました。</p>
+<p>そして、移民も多いためか外国人に対して慣れている感じも見受けられます。物価が若干高いところと、気候が寒いところを除けば、日本人にとっても住みやすそうな街に感じました。もちろん１週間しか滞在していないので実際のところは分かりませんが、<a href="http://www.statcan.gc.ca/pub/89-621-x/89-621-x2007013-eng.htm" title="The Japanese Community in Canada" target="_blank" rel="external">The Japanese Community in Canada</a> が示すようにバンクーバーの人口の 1.3% が日系であることからも日本人にとっての住みやすさが想像できます。</p>
+<h3>英語の重要性</h3>
+<p>カナダで開催されるカンファレンスということもあり、やはりコミュニケーションは英語になります。長く英語を話す機会から離れているので、この点も今回の旅において心配する要因の１つでした。</p>
+<p>少し前に、<a href="https://soundcloud.com/engineer-meeting/vol6-4?in=engineer-meeting/sets/vol-6" title="エンジニアミーティング vol.6-4 エンジニアの英語戦略" target="_blank" rel="external">エンジニアミーティング vol.6-4 エンジニアの英語戦略</a> というポッドキャスト番組でも話があったように、特にここ１、２年はまわりにいるエンジニアが英語を話せるようになる必要性を強く感じてきています。</p>
+<p>実際、職場の友人も、English Lunch という呼ばれる英語オンリーで会話するランチを定期的に開いたり、Frontrend の <a href="https://twitter.com/1000ch" title="@1000ch" target="_blank" rel="external">@1000ch</a> が「<a href="http://1000ch.net/posts/2014/look-back-over-2014.html" title="2014年の振り返りと人気記事まとめ" target="_blank" rel="external">2014年の振り返りと人気記事まとめ</a>」で触れているように <a href="https://www.rarejob.com/" title="a" target="_blank" rel="external">レアジョブ英会話</a> で毎日レッスンを受けたりしている人がたくさんいます。</p>
+<p>私も同様に、生の声を聞ける機会に英語で<strong>恐れず</strong>話ができることは大事だと今回の旅で思いました。（恐れず、を強調したのは、別に流暢でなくてもコミュニケーションを取ることができれば良いと思っているからです。）私は漠然と開発における技術やワークフロー、考え方など欧米は日本より進んでいるように思っていましたが、実際にカンファレンス参加者と話すと日本で私たちが課題に持っているのと同じような課題を抱えていて、相手の話が身近に感じたり私の話に共感してくれたりするのがとても新鮮でした。</p>
+<h3>Smashing Conference Whistler</h3>
+<p>さて、今回参加した Smashing Conference ですが、<strong>ウィスラー</strong>というバンクーバーから車で２時間程離れたリゾート地で開催されました。（ウィスラーは２０１０年冬季オリンピック競技が行われたくらいのスキーリゾートなので、正直スキーやスノボというオマケにつられてカンファレンスに参加した、という人もいました。）</p>
+<p>参加者は、やはりカナダ人、とりわけバンクーバーから来ている人が多かったのですが、アメリカ人も多くいました。逆に考えると、カナダからアメリカのカンファレンスなどのイベントに参加することもそのくらい気軽なのだろうと感じます。（日本からアメリカのイベントに参加しようと思うとウン十万円と費用がかかるので、この点においては羨ましい限りです。）</p>
+<h3>Mr. Brad Frost と Atomic Design</h3>
+<p>今回のカンファレンスで一番楽しみにしていたのは、<a href="https://twitter.com/brad_frost" title="Brad Frost" target="_blank" rel="external">Brad Frost</a> 氏の Full-day ワークショップを受講することでした。Brad Frost 氏は Responsive Design のパターンやニュースなどを集めたサイト <a href="http://bradfrost.github.io/this-is-responsive/" title="This Is Responsive" target="_blank" rel="external">This Is Responsive</a> を公開し、Adaptive Design に関する実用的で深い見識を持っています。</p>
+<p>私がこのワークショップを楽しみにしていた理由は、彼がレスポンシブな Web をコンポーネントベースでデザインする方法論として、<strong>Atomic Design</strong> というものを提唱していて、このワークショップはその考えを学ぶことができる場だったからです。</p>
+<p>ここ１年、私は２つのプロジェクトでフロントエンドの開発をしました。どちらのプロジェクトでも<a href="http://www.slideshare.net/ygoto3q/componentization-for-reality" title="Componentization for Reality" target="_blank" rel="external">コンポーネントベースでの UI 開発を意識してきました</a>が、コンポーネントをどんな粒度で作るのが１番再利用性が高くなるのか、なかなか明確な基準をチームの中で共有することができないでいました。彼のワークショップを通して、コンポーネント開発に対する考え方を磨きたいと思いました。</p>
+<p>ここからは、そのワークショップおよび、カンファレンスの１セッションでもあった Atomic Design について書きたいと思います。</p>
+<h3>Atomic Design とは</h3>
+<p><a href="http://bradfrost.com/blog/post/atomic-web-design/" title="Atomic Design" target="_blank" rel="external">Atomic Design</a> はデザインシステムを作るための１つの手段です。ざっくり言うと UI コンポーネントを粒度に応じたカテゴリーに明確に分ける手法です。Atomic Design では下記のようなカテゴライズのレベルが示されています。</p>
+<ol>
+<li>Atoms - 原子</li>
+<li>Molecules - 分子</li>
+<li>Organisms - 有機体</li>
+<li>Templates - テンプレート</li>
+<li>Pages - ページ</li>
+</ol>
+<p>これらのカテゴリーは上から下に行くにつれて、粒度は大きくなり、抽象度は下がっていきます。下位カテゴリーのコンポーネント（例えば原子）を組み合わせて上位のコンポーネント（分子）を構成するようにデザインを考えていきます。</p>
+<blockquote>
+<p>We’re not designing pages, we’re designing systems of components.</p>
+</blockquote>
+<p>まさに <a href="https://twitter.com/stephenhay" title="Stephen Hay" target="_blank" rel="external">Stephen Hay</a> 氏の上記の言葉にあるように、ページをデザインするのではなく、コンポーネントで構成するデザインシステムです。</p>
+<h3>特徴的な名称</h3>
+<p>私が Atomic Design が手段としてとても優れていると思う点は、カテゴリーの名称がコミュニケーション・ツールとしても柔軟なところです。</p>
+<p>５つのカテゴリーのうち、原子、分子、有機体に関しては、開発サイドにメリットがあるカテゴリー名です。この３つの名称は、およそ Web デザインには関係が無さそうな名前です。しかし、原子と原子が結合して分子になることから連想すると、コンポーネントを組み合わせて新しいコンポーネントを作り出すという特性をとても正確に表しています。</p>
+<p>それに対してテンプレートとページという２つの名称はとても一般的です。前者３つのコンポーネントより具体性が増して、このレベルではクライアントやプロデューサーに見せるアウトプットになるので、彼らと会話するときに余計な違和感を与えることなくコミュニケーションできる名称になっています。</p>
+<h3>Pattern Lab</h3>
+<p>５つのカテゴリーを１つずつ説明する前に、Atomic Design を実践するために便利なツールである <a href="http://patternlab.io/" title="Pattern Lab" target="_blank" rel="external">Pattern Lab</a> を紹介します。Pattern Lab は Brad Frost 氏と <a href="https://twitter.com/dmolsen" title="Dave Olsen" target="_blank" rel="external">Dave Olsen</a> 氏の両名が作ったパターンライブラリかつ静的サイト・ジェネレータです。</p>
+<p>パターンライブラリとしては、原子や分子、有機体といったコンポーネントパターンをコードベースで管理することができます。また静的サイト・ジェネレータとしては、ページやテンプレートと言ったサイトレベルのデザインを原子、分子、有機体から生成します。</p>
+<p>Pattern Lab は Atomic Design のパターンを作るスターターキットとしてとても優れているので、ここからの５つのカテゴリの紹介は Pattern Lab で説明していきたいと思います。</p>
+<h3>Atoms - 原子</h3>
+<p>原子という名前の通り、これ以上分割することができない基本的な要素がこのカテゴリに含まれます。これ以上分割することができない要素なので、ラベルやインプット要素、ボタンなどの HTML タグは原子としてカテゴライズされます。カラーパレットやフォント、アニメーションなどもこれ以上分割することができない要素として原子に含まれます。</p>
+<p><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment">&lt;!-- 見出し --&gt;</span></div><div class="line"><span class="tag">&lt;<span class="name">h1</span>&gt;</span>Heading Level 1<span class="tag">&lt;/<span class="name">h1</span>&gt;</span></div></pre></td></tr></table></figure></p>
+<p><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="comment">&lt;!-- ボタン --&gt;</span></div><div class="line"><span class="tag">&lt;<span class="name">p</span>&gt;</span><span class="tag">&lt;<span class="name">a</span> <span class="attr">href</span>=<span class="string">"#"</span> <span class="attr">class</span>=<span class="string">"btn"</span>&gt;</span>Button<span class="tag">&lt;/<span class="name">a</span>&gt;</span><span class="tag">&lt;/<span class="name">p</span>&gt;</span></div></pre></td></tr></table></figure></p>
+<p><a href="/images/smashing-conference-whistler-and-atomic-design/button.png"><img src="/images/smashing-conference-whistler-and-atomic-design/button.png" alt="button"></a></p>
+<p>原子にカテゴライズされる要素は、基本的に単体では UI として意味を成さないものばかりになりますが、この後に紹介していくカテゴリのコンポーネントも、ここの要素にあてられたスタイルがベースとなっていきます。この要素たちを集めて一覧化すれば、<a href="https://twitter.com/danielmall" title="Dan Mall" target="_blank" rel="external">Dan Mall</a> 氏の <a href="http://danielmall.com/articles/rif-element-collages/" title="ELEMENT COLLAGES" target="_blank" rel="external">ELEMENT COLLAGES</a> のような感じで、サイト全体のトンマナを要素レベルで俯瞰できるはずです。</p>
+<h3>Molecules - 分子</h3>
+<p>分子もその名の通り、原子がくっついてできる最小の単位です。ラベルやインプット要素、ボタンなどのコンポーネントを合わせて、例えば検索フォームという形にすることができます。原子は単体ではあまり意味をなさないものでしたが、組み合わせることで目的を持ったコンポーネントになることができます。</p>
+<p>ただ、このコンポーネントが持っている目的はまだ汎用的なもので、コンポーネントとしての再利用性が５つのカテゴリの中で最も高くなるようにデザインしていく必要があります。これが Atomic Design システムの根幹を担います。この分子をいろいろな UI パーツに上手に組み込むことが Atomic Design のコツとなるように思います。</p>
+<p>Pattern Lab では、このように既存で作った原子を組み合わせて分子としてのコンポーネントを作れるように、別のコンポーネントをインクルードすることができるようになっています。</p>
+<p><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"block block-thumb"</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">a</span> <span class="attr">href</span>=<span class="string">"&#123;&#123; url &#125;&#125;"</span> <span class="attr">class</span>=<span class="string">"b-inner"</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"b-thumb"</span>&gt;</span></div><div class="line">      &#123;&#123;&gt; atoms-square &#125;&#125;</div><div class="line">    <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"b-text"</span>&gt;</span></div><div class="line">      <span class="tag">&lt;<span class="name">h2</span> <span class="attr">class</span>=<span class="string">"b-title"</span>&gt;</span>&#123;&#123; headline.short &#125;&#125;<span class="tag">&lt;/<span class="name">h2</span>&gt;</span></div><div class="line">      <span class="tag">&lt;<span class="name">p</span>&gt;</span>&#123;&#123; excerpt.medium &#125;&#125;<span class="tag">&lt;/<span class="name">p</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">div</span>&gt;</span></div><div class="line">  <span class="tag">&lt;/<span class="name">a</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">div</span>&gt;</span></div></pre></td></tr></table></figure></p>
+<p><a href="/images/smashing-conference-whistler-and-atomic-design/molecule.png"><img src="/images/smashing-conference-whistler-and-atomic-design/molecule.png" alt="molecule"></a></p>
+<p>Pattern Lab はテンプレートエンジンとして Mustache を使っており、<code>{{> そのコンポーネントの名前}}</code> という記述でほかのコンポーネントをインクルードすることができます。上記のコードでは、原子のコンポーネントである <code>atoms-square</code> をインクルードしています。原子から分子というように小さいコンポーネントを使って大きいコンポーネントを作っていくことが簡単にできます。</p>
+<h3>Organisms - 有機体</h3>
+<p>有機体は原子や分子を組み合わせて、さらに複雑なコンポーネントを構成します。このレベルでは、インターフェースのパーツとして人が意味のある名前を付けるコンポーネントとなります。例えば、ヘッダーやフッター、記事一覧などのパーツが有機体に含まれます。</p>
+<p><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">header</span> <span class="attr">class</span>=<span class="string">"header cf"</span> <span class="attr">role</span>=<span class="string">"banner"</span>&gt;</span></div><div class="line">  &#123;&#123;&gt; atoms-logo &#125;&#125;</div><div class="line">  <span class="tag">&lt;<span class="name">a</span> <span class="attr">href</span>=<span class="string">"#search-form"</span> <span class="attr">class</span>=<span class="string">"nav-toggle nav-toggle-search icon-search"</span>&gt;</span><span class="tag">&lt;<span class="name">span</span> <span class="attr">class</span>=<span class="string">"is-vishidden"</span>&gt;</span>Search<span class="tag">&lt;/<span class="name">span</span>&gt;</span><span class="tag">&lt;/<span class="name">a</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">a</span> <span class="attr">href</span>=<span class="string">"#nav"</span> <span class="attr">class</span>=<span class="string">"nav-toggle nav-toggle-menu icon-menu"</span>&gt;</span><span class="tag">&lt;<span class="name">span</span> <span class="attr">class</span>=<span class="string">"is-vishidden"</span>&gt;</span>Menu<span class="tag">&lt;/<span class="name">span</span>&gt;</span><span class="tag">&lt;/<span class="name">a</span>&gt;</span></div><div class="line">  &#123;&#123;&gt; molecules-primary-nav &#125;&#125;</div><div class="line">  &#123;&#123;&gt; molecules-search &#125;&#125;</div><div class="line"><span class="tag">&lt;/<span class="name">header</span>&gt;</span></div></pre></td></tr></table></figure></p>
+<p><a href="/images/smashing-conference-whistler-and-atomic-design/header.png"><img src="/images/smashing-conference-whistler-and-atomic-design/header.png" alt="header"></a></p>
+<h3>Templates - テンプレート</h3>
+<p>テンプレートはその名前の通りで、具体的なコンテンツを持っていないページのテンプレートです。ヘッダーや記事一覧などの有機体、ページネーションなどの分子をレイアウトして構成します。</p>
+<p><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"page"</span> <span class="attr">id</span>=<span class="string">"page"</span>&gt;</span></div><div class="line">  &#123;&#123;&gt; organisms-header &#125;&#125;</div><div class="line">  <span class="tag">&lt;<span class="name">div</span> <span class="attr">role</span>=<span class="string">"main"</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">h1</span> <span class="attr">class</span>=<span class="string">"section-title"</span>&gt;</span>Our Outdoor Blog<span class="tag">&lt;/<span class="name">h1</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"l-two-col"</span>&gt;</span></div><div class="line">      <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"l-main"</span>&gt;</span></div><div class="line">        &#123;&#123;&gt; organisms-latest-posts &#125;&#125;</div><div class="line">        &#123;&#123;&gt; molecules-pagination &#125;&#125;</div><div class="line">      <span class="tag">&lt;/<span class="name">div</span>&gt;</span><span class="comment">&lt;!--end l-main--&gt;</span></div><div class="line">      <span class="tag">&lt;<span class="name">div</span> <span class="attr">class</span>=<span class="string">"l-sidebar"</span>&gt;</span></div><div class="line">        &#123;&#123;&gt; organisms-recent-tweets &#125;&#125;</div><div class="line">      <span class="tag">&lt;/<span class="name">div</span>&gt;</span><span class="comment">&lt;!--end l-sidebar--&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">div</span>&gt;</span><span class="comment">&lt;!--end two-col--&gt;</span></div><div class="line">  <span class="tag">&lt;/<span class="name">div</span>&gt;</span><span class="comment">&lt;!--End role=main--&gt;</span></div><div class="line">  &#123;&#123;&gt; organisms-footer &#125;&#125;</div><div class="line"><span class="tag">&lt;/<span class="name">div</span>&gt;</span></div></pre></td></tr></table></figure></p>
+<h3>Pages - ページ</h3>
+<p>最後がページです。テンプレートに画像やテキストなどの具体的なコンテンツが流し込まれて完成します。</p>
+<p><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&#123;&#123;&gt; templates-homepage &#125;&#125;</div></pre></td></tr></table></figure></p>
+<p>Pattern Lab では、コンテンツは JSON によってテンプレートに適用され、ページとなります。ここではここまで作ってきたコンポーネント現実のコンテンツに耐え得るかを確認します。サンプルテキストやアテの画像ではないコンテンツを流し込んだときにレイアウトが崩れることなく、コンポーネントとして成り立つことができているかをテストするカテゴリーでもあります。</p>
+<h3>デザインシステムの運用におけるパターンライブラリの重要性</h3>
+<p>私も過去のプロジェクトで、デザインシステムらしきものを自分で考えて、そのシステムに従ってコンポーネントを管理していました。いわゆるオレオレデザインシステムです。そのデザインシステムで作ったコンポーネントの粒度が適切だったかどうかはさておき、ディベロッパー間で共通言語として使うところまでは上手くいったように思いましたが、コンポーネントを組み合わせて新しいコンポーネントを作成していくため、粒度の小さいコンポーネントに修正が入ったときの影響範囲が分かりづらくメンテナンス性にずっと課題を感じていました。</p>
+<p>コンポーネントベースのデザインシステムを運用で実践していくにあたっては、コードのメンテナンス性を保つために最低限下記の機能を持ったパターンライブラリが必要だと思います。</p>
+<ul>
+<li>粒度の小さいコンポーネントをインクルードしてより大きなコンポーネントを構成する機能</li>
+<li>インクルードされる側の粒度が小さいコンポーネントがどこで使用されているかを把握できる機能</li>
+</ul>
+<p>「粒度の小さいコンポーネントをインクルードしてより大きなコンポーネントを構成する機能」に関しては、細かいコンポーネントたちを１ソースにまとめるために必要です。やはりコンポーネントに修正を入れるときは１ヶ所だけ修正すれば良い状態が理想です。</p>
+<p>「インクルードされる側の粒度が小さいコンポーネントがどこで使用されているかを把握できる機能」に関しては、コンポーネントを削除する時に便利です。長く開発・運用を続けていると、定期的にコードの大掃除する必要に迫られると思いますが、そのコンポーネントを削除してもほかのコンポーネントに影響が出ないか確認できれば不必要なコンポーネントの掃除が容易になります。</p>
+<p>Atomic Design 実践用のサポートツールである Pattern Lab は、「粒度の小さいコンポーネントをインクルードしてより大きなコンポーネントを構成する機能」を <strong>Mastache</strong> を採用することにより実現し、「インクルードされる側の粒度が小さいコンポーネントがどこで使用されているかを把握できる機能」を <strong>Lineage</strong> という機能で実現しています。</p>
+<p>コンポーネントベースでのデザインを実践するときは、どうしてもそのデザインシステムに合ったコンポーネント管理機能を持つツールが必要になります。デザイナー・ディベロッパーは自分のプロジェクトに合ったデザインシステムを採用する必要がありますが、そのデザインシステムをサポートするツールがあるとは限りません。むしろ、ないケースの方が多いでしょう。Atomic Design の場合は、そのデザインシステムに特化した Pattern Lab というツールがすでに用意されていることが、これを採用する強い理由になるように思います。</p>
+</div><div class="post__share"><a href="https://twitter.com/share" data-text="最近よくクリエイターが移住するカナダで Atomic Design を学ぶ" data-url="https://ygoto3.com/posts/smashing-conference-whistler-and-atomic-design/" data-via="ygoto3_" class="twitter-share-button">Tweet</a><script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');
+</script><div data-href="https://ygoto3.com/posts/smashing-conference-whistler-and-atomic-design/" data-layout="button" class="fb-share-button"></div></div></article></div><footer class="pure-u-1"><div class="container-footer"><div class="footer"><div class="pure-g"><div class="pure-u"><img src="/images/ygoto3-avatar.jpg" width="80" height="80" class="footer__avatar"/></div><div class="pure-u-3-4"><a href="/"><h2 class="site-title">ygoto3.com</h2></a><p class="copyright footer__copyright">&copy; 2016&nbsp;Yusuke Goto<a href="https://twitter.com/ygoto3_" class="copyright__icon"><i class="fa fa-lg fa-twitter-square"></i></a><a href="/atom.xml" class="copyright__icon"><i class="fa fa-lg fa-rss-square"></i></a></p></div></div></div></div></footer><script src="/js/app.js"></script></body></html>

@@ -1,0 +1,621 @@
+<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="description" content="Software engineer at CyberAgent."><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>ygoto3.com</title><meta name="description" content="Software engineer at CyberAgent.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="ygoto3.com">
+<meta property="og:url" content="https://ygoto3.com/archives/page/4/index.html">
+<meta property="og:site_name" content="ygoto3.com">
+<meta property="og:description" content="Software engineer at CyberAgent.">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="ygoto3.com">
+<meta name="twitter:description" content="Software engineer at CyberAgent.">
+<meta name="twitter:creator" content="@ygoto3_">
+<meta property="fb:app_id" content="777030512429159"><link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.css"><link rel="stylesheet" href="/css/index.css"></head><body class="container"><div id="fb-root"></div><script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.5&appId=777030512429159";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));
+</script><div class="pure-g"><header class="pure-u-1"><div class="container-introduction"><div class="introduction"><a href="/"><h1 class="site-title">ygoto3.com</h1></a><p class="introduction__text">Software engineer at CyberAgent.<a href="https://twitter.com/ygoto3_" class="introduction__twitter"><i class="fa fa-lg fa-twitter-square"></i></a></p></div></div></header><div class="pure-u-1"><div class="container-posts"><article class="post"><header><a href="/posts/live-streaming-and-rtmp-for-frontend-engineers/" class="post__title"><h2>フロントエンドエンジニアのための生放送と RTMP 通信基礎</h2></a></header><div class="post__date">October 11, 2016</div><div class="post__entry"><p><img src="/images/live-streaming-and-rtmp-for-frontend-engineers/obs-sc.png" alt="生放送と RTMP 通信基礎"></p>
+<p>前回「<a href="/posts/streaming-technology-basics-for-frontend-engineers/">フロントエンドエンジニアのための動画ストリーミング技術基礎</a>」では HTTP ベースのストリーミング技術に関して勉強会を実施しました。視聴者に映像を届けるためのストリーミング技術に関してのお話でした。</p>
+<p>本記事は、<a href="https://abema.tv/" target="_blank" rel="external">AbemaTV</a> の生放送番組で撮影機材から送られた映像がエンコーダーを介してリアルタイムに放送する部分について勉強会を実施した際の資料です。</p>
+<h2>生放送における動画データの通信</h2>
+<p>AbemaTV では生放送で撮影した動画データのやりとりに <strong>RTMP</strong> というプロトコルを利用しています。</p>
+<p><img src="/images/live-streaming-and-rtmp-for-frontend-engineers/live-streaming.png" alt="生放送の配信構成"></p>
+<h2>RTMP とは</h2>
+<p>RTMP は <strong>Real-Time Message Protocol</strong> の略で、その名前の通りリアルタイムにコミュニケーションを行うためのプロトコルです。Web 業界では Photoshop などでお馴染の <a href="http://www.adobe.com/" target="_blank" rel="external">Adobe Systems</a> 社が開発しています。<a href="http://www.adobe.com/software/flash/about/" target="_blank" rel="external">Adobe Flash Player</a> がメディア配信サーバーとの間で音声や動画などのデータをやりとりするためのストリーミングのためのプロトコルとして開発されました。</p>
+<p><a href="/posts/streaming-technology-basics-for-frontend-engineers/">前回</a>紹介した HLS や MPEG-DASH もストリーミングプロトコルでしたが、RTMP はこれらと異なり、<strong>HTTP ベースではありません</strong>。ですので、HLS や MPEG-DASH のように通常の Web サーバーでコンテンツを配信できるわけではなく、専用の RTMP サーバーが必要になります。</p>
+<p><img src="/images/live-streaming-and-rtmp-for-frontend-engineers/http-and-rtmp.png" alt="RTMP 専用サーバー"></p>
+<h2>HTTP に対する優位性</h2>
+<p>HTTP における通信は必ずクライアントのリクエストから始まります。そのため、動画をストリーミングしようとする際、クライアントはサーバーに対して任意のインターバルで動画のセグメントをリクエストし続ける必要があります。HLS や MPEG-DASH におけるストリーミングはこの方式ですが、クライアントのタイミングで動画データをリクエストするため、本当の意味でのリアルタイム性はありません。動画データを生成しているサーバー側が送信したいタイミングでクライアントにデータをプッシュできる方が遅延が発生することがなく、効率的です。</p>
+<p>それに対して、RTMP におけるデータ通信は持続的に接続した状態で双方向に行われます。そのため、サーバーがクライアントに送信したいタイミングでプッシュ送信することができ、遅延が発生しません。</p>
+<p>また HTTP の場合、HTTP レスポンスヘッダーは冗長で一般的に数百バイトになります。返したいペイロードサイズに対してのオーバーヘッドを大きくしてしまっています。それに対し、RTMP パケットのヘッダーは固定長で 12 / 8 / 4 / 1 バイトのうちどれかになり、ペイロードサイズに対するオーバーヘッドは小さいです。</p>
+<h2>生放送の現場ではリアルタイム性を重視</h2>
+<p><img src="/images/live-streaming-and-rtmp-for-frontend-engineers/live-streaming-wirecast.png" alt="生放送の配信構成"></p>
+<p>AbemaTV の生放送の現場では撮影機材で撮れた映像を Wirecast などのエンコーダーでエンコードし、それを RTMP 通信で Wowza などのメディアストリーミングサーバーに届けています。そして、メディアストリーミングサーバーに届けられた映像を確認しながら、生で撮影しているその映像に対して遅延を極力少ない状態で CM 入りや視聴者参加型コンテンツなどのトリガーとなるシグナルを通信できる環境を構築しています。</p>
+<h2>RTMP の種類</h2>
+<p>RTMP にはいくつかの派生種があります。</p>
+<ul>
+<li><strong>RTMPT</strong> - HTTP でカプセル化した RTMP</li>
+<li><strong>RTMPS</strong> - TLS/SSL で暗号化して HTTPS でカプセル化した RTMP</li>
+<li><strong>RTMPE</strong> - こちらも暗号化された RTMP ですが、設計に欠陥があり RTMPS の使用が推奨されている</li>
+<li><strong>pRTMP</strong> - Adobe Primetime DRM がかかった RTMP</li>
+</ul>
+<p>RTMP は一般的に <code>1935</code> ポートを使用します。しかし、セキュリティの厳しい環境ではこの <code>1935</code> ポートが使えないこともしばしばあります。そのため、HTTP（ <code>80</code> ポート）や HTTPS（ <code>443</code> ポート）を装って通信するという手段を取ることが可能です。それが <strong>RTMPT</strong> と <strong>RTMPS</strong> になります。</p>
+<h2>更にリアルタイム性を重視したデータ通信</h2>
+<p>RTMP は <strong>TCP</strong> を利用したプロトコルですが、別に <strong>RTMFP</strong> という <strong>UDP</strong> を利用したプロトコルもあります。UDP を利用するプロトコルは TCP を利用するプロトコルと比べて通信速度面において利点があります。TCP はパケット・ロストに対して再送する仕組みですが、UDP はパケット・ロストに対して再送することはありません。その分再送のオーバーヘッドなく通信することができます。</p>
+<h2>データ量の大きな双方向データ通信</h2>
+<p>RTMP は双方向のデータ通信が可能なプロトコルですが、両方向とも送信するデータ量が大きな通信サービスを構築する場合は UDP ベースの RTMFP が好まれます。たとえばテレビ会議やビデオチャットなどは双方が送信するデータが動画のため、データサイズが大きいにも関わらず、スムーズなコミュニケーションのためにリアルタイム性が求められます。</p>
+<p>TCP で パケット・ロストによる再送で遅延の頻度が高まると、音声や映像が遅れた状態になる可能性が高くなります。特にテレビ会議やビデオチャットなどはデータの抜け落ちが発生したとしてもノイズ程度の劣化として許容できる場合がほとんどなため、UDP での通信が向いています。</p>
+<h2>RTMP をサポートするメディアストリーミングサーバ</h2>
+<p>RTMP でストリーミング配信するには、専用の RTMP サーバーが必要です。ここでは RTMP をサポートする代表的なメディアストリーミングサーバーを３つ紹介します。</p>
+<h3>Adobe Media Server</h3>
+<p><img src="/images/live-streaming-and-rtmp-for-frontend-engineers/adobe-media-server.png" alt="Adobe Media Server"></p>
+<p>Adobe Systems 社が開発しているメディアストリーミングサーバーです。Flash 技術の総本山である Adobe が開発しているだけあり、ここで紹介するメディアサーバーの中で一番知名度が高く、機能も豊富です。そしてその分ライセンス料も高いです。（RTMFP のサポート有無など機能数に応じて複数のエディションに別れています。）</p>
+<p>参照：<a href="http://www.adobe.com/jp/products/adobe-media-server-family/buying-guide-comparison.html" target="_blank" rel="external">Adobe Media Serverファミリー</a></p>
+<h3>Wowza Media Server</h3>
+<p><img src="/images/live-streaming-and-rtmp-for-frontend-engineers/wowza.png" alt="Wowza Media Systems"></p>
+<p><a href="https://www.wowza.com/" target="_blank" rel="external">Wowza Media Systems</a> 社によって開発されているメディアストリーミングサーバーです。元 Adobe Systems の社員がスピンアウトして立ち上げたこともあり、Adobe Media Server との互換性が高く、ほぼ同等の機能を持っています。それにも関わらずライセンス価格は Adobe Media Server と比較するとかなり安価なこともあり、AbemaTV でも生放送のストリーミングサーバーには Wowza Media Server を使用しています。</p>
+<h3>Red5</h3>
+<p><img src="/images/live-streaming-and-rtmp-for-frontend-engineers/red5.png" alt="Red5"></p>
+<p>Java で実装されたオープンソースの RTMP プロトコルをサポートするメディアストリーミングサーバーです。Adobe Media Server にかなり似せて作られていて、単体のサーバーとしては同等の機能を提供してくれますが、クラスタリング構成にあまり対応していないため、大規模な配信サービスを構築する場合には注意が必要です。</p>
+<h2>RTMP を使用するためのクライアントサイド</h2>
+<p>Web ブラウザは RTMP をネイティブでは対応していません。ブラウザ上で RTMP を使用するためには、プラグインとして Adobe Flash Player を使用する必要があります。</p>
+<h2>簡単な RTMP ストリーミング配信を実装してみる</h2>
+<p>まずは RTMP ストリーミングサーバーを構築します。先述したメディアサーバーを使用したいところですが、今回は単純なストリーミング機能のみを提供できれば良いので、NGINX をメディアストリーミングサーバーとして使うことができる <a href="https://github.com/arut/nginx-rtmp-module" target="_blank" rel="external">nginx-rtmp-module</a> を使います。</p>
+<h3>Docker で NGINX を立てる</h3>
+<p>nginx-rtmp-module を追加してコンパイルした NGINX の Docker イメージを作ります。ベースイメージには Alpine Linux を使います。ここでは RTMP 用に <code>1935</code> ポートと Flash アプリケーションを読み込むための HTML を返すために HTTP <code>80</code> ポートを開けるようにします。</p>
+<h4>Dockerfile を作成する</h4>
+<p>下記の Dockerfile では、コンパイルに必要なパッケージを <code>apk</code> でインストールして、任意のバージョンの NGINX と nginx-rtmp-module の Tarball をダウンロードし、コンパイルしています。 <code>./configure</code> のパラメータがやたら多いですが、必要ないモジュールを除外しているだけです。</p>
+<p><figure class="highlight haml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div></pre></td><td class="code"><pre><div class="line">FROM alpine:3.4</div><div class="line">ENV NGINX_VERSION nginx-1.11.4</div><div class="line">ENV NGINX_RTMP_MODULE_VERSION 1.1.7.10</div><div class="line"></div><div class="line">ENV USER nginx</div><div class="line">RUN adduser -s /sbin/nologin -D -H $&#123;USER&#125;</div><div class="line"></div><div class="line">RUN apk --update --no-cache \</div><div class="line">    add ca-certificates \</div><div class="line">        build-base \</div><div class="line">        openssl \</div><div class="line">        openssl-dev \</div><div class="line">        pcre-dev \</div><div class="line">    &amp;&amp; \</div><div class="line">    update-ca-certificates &amp;&amp; \</div><div class="line">    rm -rf /var/cache/apk/*</div><div class="line"></div><div class="line">RUN mkdir -p /tmp/build/nginx &amp;&amp; \</div><div class="line">    cd /tmp/build/nginx &amp;&amp; \</div><div class="line">    wget -O $&#123;NGINX_VERSION&#125;.tar.gz https://nginx.org/download/$&#123;NGINX_VERSION&#125;.tar.gz &amp;&amp; \</div><div class="line">    tar -zxf $&#123;NGINX_VERSION&#125;.tar.gz</div><div class="line"></div><div class="line">RUN mkdir -p /tmp/build/nginx-rtmp-module &amp;&amp; \</div><div class="line">    cd /tmp/build/nginx-rtmp-module &amp;&amp; \</div><div class="line">    wget -O nginx-rtmp-module-$&#123;NGINX_RTMP_MODULE_VERSION&#125;.tar.gz https://github.com/sergey-dryabzhinsky/nginx-rtmp-module/archive/v$&#123;NGINX_RTMP_MODULE_VERSION&#125;.tar.gz &amp;&amp; \</div><div class="line">    tar -zxf nginx-rtmp-module-$&#123;NGINX_RTMP_MODULE_VERSION&#125;.tar.gz &amp;&amp; \</div><div class="line">    cd nginx-rtmp-module-$&#123;NGINX_RTMP_MODULE_VERSION&#125; &amp;&amp; \</div><div class="line">    wget -O - https://raw.githubusercontent.com/gentoo/gentoo/6241ba18ca4a5e043a97ad11cf450c8d27b3079f/www-servers/nginx/files/rtmp-nginx-1.11.0.patch | patch</div><div class="line"></div><div class="line">RUN cd /tmp/build/nginx/$&#123;NGINX_VERSION&#125; &amp;&amp; \</div><div class="line">    ./configure \</div><div class="line">      -<span class="ruby">-sbin-path=<span class="regexp">/usr/local</span><span class="regexp">/sbin/nginx</span> \</span></div><div class="line"><span class="ruby">      --conf-path=<span class="regexp">/etc/nginx</span><span class="regexp">/nginx.conf \</span></span></div><div class="line"><span class="ruby">      --error-log-path=<span class="regexp">/var/log</span><span class="regexp">/nginx/error</span>.log \</span></div><div class="line"><span class="ruby">      --pid-path=<span class="regexp">/var/run</span><span class="regexp">/nginx/nginx</span>.pid \</span></div><div class="line"><span class="ruby">      --lock-path=<span class="regexp">/var/lock</span><span class="regexp">/nginx/nginx</span>.lock \</span></div><div class="line"><span class="ruby">      --user=$&#123;USER&#125; --group=$&#123;USER&#125; \</span></div><div class="line"><span class="ruby">      --http-log-path=<span class="regexp">/var/log</span><span class="regexp">/nginx/access</span>.log \</span></div><div class="line"><span class="ruby">      --http-client-body-temp-path=<span class="regexp">/tmp/nginx</span>-client-body \</span></div><div class="line"><span class="ruby">      --with-http_ssl_module \</span></div><div class="line"><span class="ruby">      --with-http_gzip_static_module \</span></div><div class="line"><span class="ruby">      --without-http_userid_module \</span></div><div class="line"><span class="ruby">      --without-http_access_module \</span></div><div class="line"><span class="ruby">      --without-http_auth_basic_module \</span></div><div class="line"><span class="ruby">      --without-http_autoindex_module \</span></div><div class="line"><span class="ruby">      --without-http_geo_module \</span></div><div class="line"><span class="ruby">      --without-http_map_module \</span></div><div class="line"><span class="ruby">      --without-http_split_clients_module \</span></div><div class="line"><span class="ruby">      --without-http_referer_module \</span></div><div class="line"><span class="ruby">      --without-http_proxy_module \</span></div><div class="line"><span class="ruby">      --without-http_fastcgi_module \</span></div><div class="line"><span class="ruby">      --without-http_uwsgi_module \</span></div><div class="line"><span class="ruby">      --without-http_scgi_module \</span></div><div class="line"><span class="ruby">      --without-http_memcached_module \</span></div><div class="line"><span class="ruby">      --without-http_limit_conn_module \</span></div><div class="line"><span class="ruby">      --without-http_limit_req_module \</span></div><div class="line"><span class="ruby">      --without-http_empty_gif_module \</span></div><div class="line"><span class="ruby">      --without-http_browser_module \</span></div><div class="line"><span class="ruby">      --without-http_upstream_hash_module \</span></div><div class="line"><span class="ruby">      --without-http_upstream_ip_hash_module \</span></div><div class="line"><span class="ruby">      --without-http_upstream_least_conn_module \</span></div><div class="line"><span class="ruby">      --without-http_upstream_keepalive_module \</span></div><div class="line"><span class="ruby">      --without-http_upstream_zone_module \</span></div><div class="line"><span class="ruby">      --without-http-cache \</span></div><div class="line"><span class="ruby">      --without-mail_pop3_module \</span></div><div class="line"><span class="ruby">      --without-mail_imap_module \</span></div><div class="line"><span class="ruby">      --without-mail_smtp_module \</span></div><div class="line"><span class="ruby">      --without-stream_limit_conn_module \</span></div><div class="line"><span class="ruby">      --without-stream_access_module \</span></div><div class="line"><span class="ruby">      --without-stream_upstream_hash_module \</span></div><div class="line"><span class="ruby">      --without-stream_upstream_least_conn_module \</span></div><div class="line"><span class="ruby">      --without-stream_upstream_zone_module \</span></div><div class="line"><span class="ruby">      --with-threads \</span></div><div class="line"><span class="ruby">      --with-ipv6 \</span></div><div class="line"><span class="ruby">      --add-<span class="class"><span class="keyword">module</span>=/<span class="title">tmp</span>/<span class="title">build</span>/<span class="title">nginx</span>-<span class="title">rtmp</span>-<span class="title">module</span>/<span class="title">nginx</span>-<span class="title">rtmp</span>-<span class="title">module</span>-$&#123;<span class="title">NGINX_RTMP_MODULE_VERSION</span>&#125; &amp;&amp; \</span></span></div><div class="line"><span class="ruby">    make -j $(getconf _NPROCESSORS_ONLN) &amp;&amp; \</span></div><div class="line"><span class="ruby">    make install &amp;&amp; \</span></div><div class="line"><span class="ruby">    mkdir /var/lock/nginx &amp;&amp; \</span></div><div class="line"><span class="ruby">    mkdir /tmp/nginx-client-body &amp;&amp; \</span></div><div class="line"><span class="ruby">    rm -rf /tmp/build</span></div><div class="line"><span class="ruby"></span></div><div class="line"><span class="ruby">RUN apk del build-base openssl-dev &amp;&amp; \</span></div><div class="line"><span class="ruby">    rm -rf /var/cache/apk/*</span></div><div class="line"><span class="ruby"></span></div><div class="line"><span class="ruby">RUN ln -sf /dev/stdout /var/log/nginx/access.log &amp;&amp; \</span></div><div class="line"><span class="ruby">    ln -sf /dev/stderr /var/log/nginx/error.log</span></div><div class="line"><span class="ruby"></span></div><div class="line"><span class="ruby">COPY nginx/nginx.conf /etc/nginx/nginx.conf</span></div><div class="line"><span class="ruby">COPY build /var/www/build</span></div><div class="line"><span class="ruby"></span></div><div class="line"><span class="ruby">RUN chmod <span class="number">444</span> /etc/nginx/nginx.conf &amp;&amp; \</span></div><div class="line"><span class="ruby">    chown $&#123;USER&#125;<span class="symbol">:</span>$&#123;USER&#125; /var/log/nginx /var/run/nginx /var/lock/nginx /tmp/nginx-client-body &amp;&amp; \</span></div><div class="line"><span class="ruby">    chmod -R <span class="number">770</span> /var/log/nginx /var/run/nginx /var/lock/nginx /tmp/nginx-client-body</span></div><div class="line"><span class="ruby"></span></div><div class="line"><span class="ruby">EXPOSE <span class="number">80</span></span></div><div class="line"><span class="ruby">EXPOSE <span class="number">1935</span></span></div><div class="line"><span class="ruby">CMD [<span class="string">"nginx"</span>]</span></div></pre></td></tr></table></figure></p>
+<h4>NGINX の configuration を設定する</h4>
+<p>イメージにコピーする <code>nginx.conf</code> は下記のように設定します。 <code>http</code> コンテキストに加えて <code>nginx-rtmp-module</code> で使用できるようになった <code>rtmp</code> コンテキストに設定を追加しています。</p>
+<p><figure class="highlight routeros"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">user nginx;</div><div class="line">worker_processes 1;</div><div class="line">daemon off;</div><div class="line"></div><div class="line">events &#123;</div><div class="line">  <span class="built_in">..</span>.</div><div class="line">&#125;</div><div class="line"></div><div class="line">http &#123;</div><div class="line">  <span class="built_in">..</span>.</div><div class="line">&#125;</div><div class="line"></div><div class="line">rtmp &#123;</div><div class="line"> <span class="built_in"> server </span>&#123;</div><div class="line">    listen 1935;</div><div class="line">    listen [::]:1935 <span class="attribute">ipv6only</span>=on;</div><div class="line"></div><div class="line">    application live &#123;</div><div class="line">      live on;</div><div class="line">      record off;</div><div class="line">    &#125;</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>この <code>rtmp</code> コンテキストの設定により、ローカルに Docker コンテナを立ち上げたとき <code>rtmp://localhost:1935/live</code> という URL で RTMP サーバに接続が可能になります。</p>
+<h3>RTMP プレイヤーを実装する</h3>
+<p>次に RTMP プレイヤーとそれを表示する HTML を作成します。RTMP プレイヤーは Flash アプリケーションとして実装するので ActionScript で書きます。まず新規ファイル <code>Player.as</code> を作成します。</p>
+<p><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ touch Player.as</div></pre></td></tr></table></figure></p>
+<p><code>Player.as</code> に <code>Player</code> クラスを作成します。動画を表示するための <code>Video</code> オブジェクトも追加したいので、 <code>Sprite</code> クラスを継承しておきます。</p>
+<p><figure class="highlight actionscript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">package</span> &#123;</span></div><div class="line"></div><div class="line">  <span class="meta"><span class="meta-keyword">import</span> flash.display.Sprite;</span></div><div class="line">  <span class="meta"><span class="meta-keyword">import</span> flash.display.StageScaleMode;</span></div><div class="line">  <span class="meta"><span class="meta-keyword">import</span> flash.display.StageAlign;</span></div><div class="line">  <span class="meta"><span class="meta-keyword">import</span> flash.events.Event;</span></div><div class="line">  <span class="meta"><span class="meta-keyword">import</span> flash.events.NetStatusEvent;</span></div><div class="line">  <span class="meta"><span class="meta-keyword">import</span> flash.net.NetConnection;</span></div><div class="line">  <span class="meta"><span class="meta-keyword">import</span> flash.net.NetStream;</span></div><div class="line">  <span class="meta"><span class="meta-keyword">import</span> flash.media.Video;</span></div><div class="line">  <span class="meta"><span class="meta-keyword">import</span> flash.external.ExternalInterface;</span></div><div class="line"></div><div class="line">  [SWF(backgroundColor=<span class="string">"0x000000"</span>)]</div><div class="line">  <span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Player</span> <span class="keyword">extends</span> <span class="title">Sprite</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="keyword">var</span> nc: NetConnection;</div><div class="line">    <span class="keyword">private</span> <span class="keyword">var</span> ns: NetStream;</div><div class="line">    <span class="keyword">private</span> <span class="keyword">var</span> video: Video;</div><div class="line">    </div><div class="line">    <span class="function"><span class="keyword">function</span> <span class="title">Player</span><span class="params">()</span> </span>&#123;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">  &#125;</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>次に <code>Stage</code> の設定します。Flash コンテンツを左上に整列する設定だけします。</p>
+<p><figure class="highlight actionscript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">Player</span><span class="params">()</span> </span>&#123;</div><div class="line">  setupStage();</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">function</span> <span class="title">setupStage</span><span class="params">()</span>: void </span>&#123;</div><div class="line">  stage.scaleMode = StageScaleMode.NO_SCALE;</div><div class="line">  stage.align = StageAlign.TOP_LEFT;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p><code>NetConnection</code> クラスを使い、クライアントとサーバー間の双方向の接続を作成するための準備をします。 <code>NetConnection</code> オブジェクトのステータスが変化したタイミングで、メディアサーバーからのデータを再生できるように、 <code>NetStream</code> クラスを使ってストリームチャネルを開きます。開いた後ライブストリームを再生するために <code>ns.play()</code> メソッドを実行します。このときストリーム名として <code>&quot;test&quot;</code> を渡していますが、これは後程ライブストリームを作成する際にも使う名前になります。</p>
+<p><figure class="highlight actionscript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">Player</span><span class="params">()</span> </span>&#123;</div><div class="line">  ...</div><div class="line">  setupNetConnection();</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">function</span> <span class="title">setupNetConnection</span><span class="params">()</span>: void </span>&#123;</div><div class="line">  nc = <span class="keyword">new</span> NetConnection();</div><div class="line">  nc.addEventListener(NetStatusEvent.NET_STATUS, onChangeNCStatus);</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">function</span> <span class="title">onChangeNCStatus</span><span class="params">(e: NetStatusEvent)</span>: void </span>&#123;</div><div class="line">  <span class="keyword">const</span> code: String = e.info.code;</div><div class="line">  <span class="keyword">if</span> (code === <span class="string">"NetConnection.Connect.Success"</span>) &#123;</div><div class="line">    setupNetStream();</div><div class="line">    ns.play(<span class="string">"test"</span>);</div><div class="line">  &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>作成したストリームチャネルからの動画を表示するために <code>Video</code> オブジェクトに取り付けます。</p>
+<p><figure class="highlight actionscript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">function</span> <span class="title">setupNetStream</span><span class="params">()</span>: void </span>&#123;</div><div class="line">  ns = <span class="keyword">new</span> NetStream(nc);</div><div class="line">  ns.addEventListener(NetStatusEvent.NET_STATUS, onChangeNSStatus);</div><div class="line"></div><div class="line">  video.attachNetStream(ns);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>この <code>Video</code> オブジェクトもコンストラクト時に作成し、ステージに追加してきます。</p>
+<p><figure class="highlight actionscript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">Player</span><span class="params">()</span> </span>&#123;</div><div class="line">  ...</div><div class="line">  ssetupVideo();</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">function</span> <span class="title">setupVideo</span><span class="params">()</span>: void </span>&#123;</div><div class="line">  video = <span class="keyword">new</span> Video(stage.width, stage.height);</div><div class="line">  addChild(video);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p><code>NetConnection</code> の準備が整ったので、最後にメディアサーバーに接続します。URL は先程の NGINX の RTMP メディアサーバーの <code>live</code> application に向けています。</p>
+<p><figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">Player</span>(<span class="params"></span>) </span>&#123;</div><div class="line">  ...</div><div class="line">  nc.connect(<span class="string">"rtmp://localhost:1935/live"</span>);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h3>ActionScript のコンパイル</h3>
+<p>これで RTMP サーバーの実装はできたので、次は ActionScript をコンパイルします。コンパイルには Apache/Adobe Flex SDK の Node.js モジュール版である <a href="https://github.com/JamesMGreene/node-flex-sdk" target="_blank" rel="external">node-flex-sdk</a> を使用します。まずは NPM でインストールします。</p>
+<p><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ npm i flex-sdk --save-dev</div></pre></td></tr></table></figure></p>
+<p>無事インストールできたら、<code>mxmlc</code> というコマンドを使って、 <code>Player.as</code> から <code>Player.swf</code> をコンパイルします。</p>
+<p><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ $(npm bin)/mxmlc --output=Player.swf Player.as</div></pre></td></tr></table></figure></p>
+<h3>HTML の作成</h3>
+<p>作成された <code>Player.swf</code> を表示する HTML を作成します。</p>
+<p><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&lt;<span class="keyword">object</span> <span class="keyword">data</span>=<span class="string">"./Player.swf"</span> type=<span class="string">"application/x-shockwave-flash"</span>&gt;&lt;/<span class="keyword">object</span>&gt;</div></pre></td></tr></table></figure></p>
+<h3>Docker コンテナの起動</h3>
+<p>Docker コンテナの構成に必要なファイルが揃ったので、これでイメージを作成します。</p>
+<p><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ docker build -t rtmp .</div></pre></td></tr></table></figure></p>
+<p>イメージが作成できたか確認しましょう。</p>
+<p><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$ docker images</div><div class="line">REPOSITORY                   TAG                 IMAGE ID            CREATED             SIZE</div><div class="line">rtmp                         latest              ************        About a minute ago          180.7 MB</div></pre></td></tr></table></figure></p>
+<p>無事に作成できたら、そのイメージから Docker コンテナを起動します。</p>
+<p><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ docker run -p 1935:1935 -p 80:80 --name rtmp -t rtmp</div></pre></td></tr></table></figure></p>
+<p>Web ブラウザで <a href="http://localhost/" target="_blank" rel="external">http://localhost/</a> にアクセスしてみましょう。</p>
+<p><img src="/images/live-streaming-and-rtmp-for-frontend-engineers/browser-sc-black.png" alt="RTMP プレイヤー"></p>
+<p>黒いボックスが表示されたと思います。このボックスが RTMP プレイヤーなのですが、今は配信するストリームが存在していないため、何も再生できず黒い状態です。ですので、次は再生するストリームを作成します。</p>
+<h3>ストリームの作成</h3>
+<p>ここでは、<a href="https://obsproject.com/" target="_blank" rel="external">Open Broadcaster Software</a> （OBS）というオープンソースのライブストリーミング用のツールを使用してストリームを作成します。</p>
+<p>OBS を起動して、「Settings」ボタンをクリックします。</p>
+<p><img src="/images/live-streaming-and-rtmp-for-frontend-engineers/obs-sc-settings.png" alt="OBS"></p>
+<p>「Settings」ダイアログが表示されるので、左側のペインから「Stream」を選択します。
+すると「URL」と「Stream key」を入力する画面に切り替わりますので、「URL」に NGINX の RTMP サーバーの <code>live</code> application の URL を入力し、「Stream key」には先程 RTMP プレイヤーを実装したときにストリーム名として指定した <code>test</code> を入力します。</p>
+<p><img src="/images/live-streaming-and-rtmp-for-frontend-engineers/obs-sc-stream.png" alt="OBS Settings"></p>
+<p>「Settings」ダイアログで「OK」をクリックしたら、次に「 Sources」の「+」をクリックして適当なメディアソースを追加します。プルダウンメニューが表示されるので「Media Source」を選択して任意の動画ファイルを追加します。</p>
+<p>メディアソースが追加されたら、「Start Streaming」ボタンをクリックしてストリーミングを開始します。</p>
+<p><img src="/images/live-streaming-and-rtmp-for-frontend-engineers/obs-sc-start.png" alt="OBS Sources"></p>
+<p>ストリーミングが開始されたら、Web ブラウザに戻ります。すると OBS でストリームしている動画がブラウザの方でも再生されていることが確認できます。</p>
+<p><img src="/images/live-streaming-and-rtmp-for-frontend-engineers/browser-sc.png" alt="RTMP 再生"></p>
+<h2>RTMP でメディアサーバーのメソッドを呼ぶ</h2>
+<p>ここまでで RTMP でサーバー側からプッシュされたデータをクライアントで再生する実装をしてきました。しかし、RTMP は双方向のデータ通信が可能なので、クライアント側からサーバー側のメソッドを呼ぶことも可能です。 <code>nginx-rtmp-module</code> では難しいですが、メディアサーバーに Adobe Media Server や Wowza Media Server を利用して開発をした場合、クライアント側からサーバー側のメソッドを呼ぶことが可能です。</p>
+<p>ActionScript の場合、クライアントとサーバー間の双方向の接続が作成した後（ <code>NetConnection</code> オブジェクトが <code>nc.connect()</code> して、 <code>NetStatusEvent</code> が <code>&quot;NetConnection.Connect.Success&quot;</code> になった後）であれば、 <code>nc.call()</code> でサーバー側のメソッドを呼ぶことができます。 <code>nc.call()</code> の第１引数がメソッド名なので、 <code>nc.call(&quot;doSomething&quot;)</code> のようにクライアントから実行した場合、メディアサーバーに実装した該当のメソッドが実行されます。</p>
+<p><img src="/images/live-streaming-and-rtmp-for-frontend-engineers/call.png" alt="NetConnection.call"></p>
+<p>たとえば Wowza Media Server の場合であれば、実装は Java なので下記のようなメソッドを実装することで、クライアントから Wowza Media Server のコンソールに <code>doSomething is called</code> と表示させることが可能です。</p>
+<p><figure class="highlight cs"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">doSomething</span>(<span class="params">IClient client, RequestFunction function, AMFDataList <span class="keyword">params</span></span>) </span>&#123;  </div><div class="line">  getLogger().info(<span class="string">"doSomething is called"</span>);  </div><div class="line">  <span class="comment">// do something</span></div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>AbemaTV の生放送番組では、RTMP の双方向通信を利用して、Web ブラウザから Wowza Media Server のメソッドを呼ぶことで、番組の進行具合に合わせて CM 入りのタイミングや視聴者参加型のインタラクションコンテンツのトリガーを最小限の遅延で放送に挿し込んでいます。</p>
+<h2>RTMP で受け取った動画を HLS でもストリーミング</h2>
+<p>メディアサーバーはエンコーダーから RTMP 通信で送られた動画をそのまま RTMP でクライアントにプッシュ送信する以外に HLS や MPEG-DASH でストリーミングできるように変換することも可能です。たとえが nginx-rtmp-module の場合は先程作成した <code>nginx.conf</code> を編集して、 <code>application live</code> コンテキストに HLS に関する以下のディレクティブを追加します。</p>
+<p><figure class="highlight nginx"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="attribute">application</span> live &#123;</div><div class="line">  <span class="attribute">live</span> <span class="literal">on</span>;</div><div class="line">  <span class="attribute">record</span> <span class="literal">off</span>;</div><div class="line"></div><div class="line">  <span class="attribute">hls</span> <span class="literal">on</span>;</div><div class="line">  <span class="attribute">hls_path</span> /usr/local/nginx/html/hls;</div><div class="line">  <span class="attribute">hls_fragment</span> <span class="number">1s</span>;</div><div class="line">  <span class="attribute">hls_type</span> live;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>すると、Live セッションの m3u8 プレイリストと 1 秒感覚のセグメントファイルを <code>/usr/local/nginx/html/hls/live</code> に出力してくれます。この <code>nginx.conf</code> を反映した Docker コンテナが起動している状態で、<a href="http://localhost/hls/test.m3u8" target="_blank" rel="external">http://localhost/hls/test.m3u8</a> に Safari でアクセスすると HLS でストリーミング再生ができます。（Safari でアクセスする理由は<a href="/posts/streaming-technology-basics-for-frontend-engineers/">前回</a>書いた通り、HLS をネイティブサポートしている Web ブラウザが Safari だけだからです。）</p>
+<p><img src="/images/live-streaming-and-rtmp-for-frontend-engineers/safari-hls.png" alt="HLS を Safari で再生"></p>
+<h2>まとめ</h2>
+<p>普段の Web フロントエンドの開発では、RTMP や ActionScript を扱う必要があることはあまりありません。しかし、こと動画やストリーミング領域となるとまだ Flash テクノロジーの安定性にお世話になることも多いように思います。WebRTC や WebSocket などの技術の組み合わせでこのあたりの事情もどんどん変化していきそうです。</p>
+<h2>参考</h2>
+<ul>
+<li>
+<p><a href="http://joy2world.tistory.com/attachment/ek8.pdf" target="_blank" rel="external">RTMP Protocol [DRAFT]</a></p>
+</li>
+<li>
+<p><a href="http://www.streamingmedia.com/Articles/Editorial/Featured-Articles/RTMP-in-the-Age-of-HTTP-Video-Streaming-Dont-Count-it-Out-100909.aspx" target="_blank" rel="external">RTMP in the Age of HTTP Video Streaming: Don't Count it Out</a></p>
+</li>
+<li>
+<p><a href="http://www.programming-knowledge.com/Adobe_Media_Server%E6%A6%82%E8%A6%81" target="_blank" rel="external">Adobe Media Server概要</a></p>
+</li>
+<li>
+<p><a href="http://www.itoyanagi.name/temp/fuck/d20071109.html" target="_blank" rel="external">各種 RTMP サーバーでのライブストリーミングの実現</a></p>
+</li>
+<li>
+<p><a href="https://en.wikipedia.org/wiki/Red5_(media_server)" target="_blank" rel="external">Red5 (media server)</a></p>
+</li>
+<li>
+<p><a href="https://gist.github.com/voluntas/076fee77f30a0ca7a9b9" target="_blank" rel="external">リアルタイム動画配信コトハジメ</a></p>
+</li>
+<li>
+<p><a href="http://flashcafe.jp/kazari/k_m_clo/real.html" target="_blank" rel="external">RTMFPとRTMP</a></p>
+</li>
+<li>
+<p><a href="https://ja.wikipedia.org/wiki/Real_Time_Media_Flow_Protocol" target="_blank" rel="external">Real Time Media Flow Protocol</a></p>
+</li>
+<li>
+<p><a href="http://www.neotys.com/blog/testing-tips-for-todays-tech-html5-websockets-rtmp-adaptive-bitrate-streaming/" target="_blank" rel="external">Testing Tips For Today’s Tech: HTML5, WebSockets, RTMP, Adaptive Bitrate Streaming</a></p>
+</li>
+<li>
+<p><a href="http://coelacanth.heteml.jp/site/flash_wowza/article_5" target="_blank" rel="external">5-1.クライアントからサーバーのメソッドを呼び出す</a></p>
+</li>
+<li>
+<p><a href="https://github.com/DvdGiessen/nginx-rtmp-docker" target="_blank" rel="external">DvdGiessen/nginx-rtmp-docker</a></p>
+</li>
+<li>
+<p><a href="http://www.slideshare.net/chintal75/building-next-generation-realtime-web-applications" target="_blank" rel="external">Building Next Generation Real-Time Web Applications using Websockets</a></p>
+</li>
+<li>
+<p><a href="http://www.slideshare.net/mawarimichi/websocketwebrtc" target="_blank" rel="external">WebSocket / WebRTCの技術紹介</a></p>
+</li>
+</ul>
+</div><div class="post__share"><a href="https://twitter.com/share" data-text="フロントエンドエンジニアのための生放送と RTMP 通信基礎" data-url="https://ygoto3.com/posts/live-streaming-and-rtmp-for-frontend-engineers/" data-via="ygoto3_" class="twitter-share-button">Tweet</a><script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');
+</script><div data-href="https://ygoto3.com/posts/live-streaming-and-rtmp-for-frontend-engineers/" data-layout="button" class="fb-share-button"></div></div></article><article class="post"><header><a href="/posts/streaming-technology-basics-for-frontend-engineers/" class="post__title"><h2>フロントエンドエンジニアのための動画ストリーミング技術基礎</h2></a></header><div class="post__date">September 29, 2016</div><div class="post__entry"><p><a href="https://abema.tv/" target="_blank" rel="external">AbemaTV</a> という動画サービスをリリースしてから半年経ち、新しくサービスのフロントエンドに関わる人数が少し増えてきたため、動画に関して社内で勉強会を行いました。本記事はその勉強会資料です。</p>
+<h2>Web でメディアを見るためにはデータのダウンロードが必要</h2>
+<p><img src="/images/streaming-technology-basics-for-frontend-engineers/hls.png" alt="Download via HTTP"></p>
+<p>Web サービスが HTML を介して提供するコンテンツはテキスト、画像、音声、動画などいろいろありますが、テキスト以外のデータは HTML にインラインで返したりせず、基本的には外部ファイルとして非同期に取得されることがほとんどだと思います。</p>
+<h3>画像の場合</h3>
+<p>HTML 内の <code>img</code> 要素の <code>src</code> 属性に表示したい画像ファイルのパスを指定することで、Web ブラウザはその画像をリクエストし、ダウンロードしたデータをデコードして画像として表示します。</p>
+<p><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">img</span> <span class="attr">src</span>=<span class="string">"sample.jpg"</span> /&gt;</span></div></pre></td></tr></table></figure></p>
+<p><img src="https://placekitten.com/g/300/300" alt="https://placekitten.com/g/300/300"></p>
+<h3>動画の場合</h3>
+<p>動画の場合も同じです。<code>video</code> 要素を使って <code>img</code> 要素と同様に <code>src</code> 属性に動画ファイルのパスを指定します。</p>
+<p><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">video</span> <span class="attr">src</span>=<span class="string">"sample.mp4"</span>&gt;</span><span class="tag">&lt;/<span class="name">video</span>&gt;</span></div></pre></td></tr></table></figure></p>
+<h3>動画はデータ容量が大きい</h3>
+<p>画像と違い、動画コンテンツはデータ容量がとても大きいため、データをダウンロードして再生するまでに待ち時間が発生します。</p>
+<p><img src="/images/streaming-technology-basics-for-frontend-engineers/video-dl.png" alt="動画のダウンロード"></p>
+<p>動画のデータ容量が大きい理由はとても単純で、動画は画像データが集合したものだからです。静止画像を人間の目が滑らかに感じられる速さで切り替えて表示することで絵を動かすという表現を実現しています（よくパラパラマンガに例えられますが、そんな感じです）。この人間の目が滑らかに感じる速さというのが 1 秒間に 30 枚だったり 24 枚を切り替えることになります。29.97 (≒30) fps とか 24 fps とかの数字を耳にしたことがあるかと思いますが、24 fps の場合は 1 秒間（s）の間（p）に 24 フレーム（f）を切り替えることを意味します。</p>
+<p>データを全て自分の端末にダウンロードしてから再生しようとすると、かなり長い待ち時間が発生してしまいます。もし 2 時間の映画を見ようと思ったら 172,800 (= 24 フレーム * 60 秒 * 60 分 * 2 時間) 枚の画像をダウンロードするのを待つことになります。しかも動画を構成する要素は画像だけではなく、音声データも含まれるため、純粋な情報量としてはそれ以上になります。</p>
+<h2>ストリーミング</h2>
+<p>動画データを全てダウンロードしてから再生するのではなく、ダウンロードしたデータで再生できる部分から再生を始め、同時に残りのデータをダウンロードしていく方式を、ストリーミング再生といいます。長時間の動画でもダウンロードしながら再生することができるので、再生するまでの待ち時間を短かくすることができます。</p>
+<p>また、ストリーミングでは動画を途中から再生することも可能にします。2 時間映画のたとえば 1 時間経ったあたりから見たいとき、1 時間経過した部分からデータをダウンロードし始め、再生を始めることができます。</p>
+<p><img src="/images/streaming-technology-basics-for-frontend-engineers/seek.png" alt="シーク"></p>
+<h2>AbemaTV で使用しているストリーミングプロトコル</h2>
+<p>ストリーミング再生は、映像を配信する側と映像を再生する側で、データをどのような手順で通信するかをあらかじめ決めて、その手順通りに両者がデータを処理することによって実現します。その通信手順のことをストリーミングプロトコルと呼びます。ここでは AbemaTV で使用しているはストリーミングプロトコルを 2 つ説明します。</p>
+<h3>HTTP Live Streaming</h3>
+<p>HTTP Live Streaming はアップル社が自社プロダクトである QuickTime、OS X、iOS、Safari 向けに開発したストリーミングプロトコルです。略して HLS と呼ばれるので、この記事でも HLS と表記します。その名前の通り、通信は HTTP で行われます。専用のプロトコルが必要ないため、通常の Web サーバーを用意するだけで配信ができてしまいます。</p>
+<p><img src="/images/streaming-technology-basics-for-frontend-engineers/hls.png" alt="HLS"></p>
+<p>HLS を配信するために必要なファイルは、動画を数秒ごとの「MPEG-2 TS」形式のファイルに分割したセグメントファイル、それらをどの順番で再生するかを記したプレイリストだけです。</p>
+<p><img src="/images/streaming-technology-basics-for-frontend-engineers/m3u8-ts.png" alt="m3u8 ファイルと ts ファイル"></p>
+<h4>簡単な HLS の配信を試してみる</h4>
+<p>まず、プレイリストとセグメントファイルを作成します。ここでは ffmpeg というツールを使い、 <code>input.mp4</code> というファイル名で保存されている動画から <code>output.m3u8</code> というプレイリストと分割されたセグメントファイルを作成します。</p>
+<p><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">$ ffmpeg -i input.mp4 \</div><div class="line">  -vcodec libx264 \</div><div class="line">  -s 1280x720 \</div><div class="line">  -acodec aac -b:a 256k\</div><div class="line">  -flags +loop-global_header \</div><div class="line">  -bsf h264_mp4toannexb \</div><div class="line">  -f segment -segment_format mpegts \</div><div class="line">  -segment_time 10 \</div><div class="line">  -segment_list output.m3u8 output_%04d.ts</div></pre></td></tr></table></figure></p>
+<p>すると、 <code>output.m3u8</code> と <code>output_****.ts</code> というファイルが作成されます。 <code>output.m3u8</code> の内容は下記のようになります。</p>
+<p><figure class="highlight stylus"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">#EXTM3U</div><div class="line"><span class="selector-id">#EXT-X-VERSION</span>:<span class="number">3</span></div><div class="line"><span class="selector-id">#EXT-X-MEDIA-SEQUENCE</span>:<span class="number">0</span></div><div class="line"><span class="selector-id">#EXT-X-ALLOW-CACHE</span>:YES</div><div class="line"><span class="selector-id">#EXT-X-TARGETDURATION</span>:<span class="number">18</span></div><div class="line"><span class="selector-id">#EXTINF</span>:<span class="number">10.500000</span>,</div><div class="line">output_0000.ts</div><div class="line"><span class="selector-id">#EXTINF</span>:<span class="number">12.625000</span>,</div><div class="line">output_0001.ts</div><div class="line"><span class="selector-id">#EXTINF</span>:<span class="number">10.416667</span>,</div><div class="line">output_0002.ts</div><div class="line"><span class="selector-id">#EXTINF</span>:<span class="number">10.416667</span>,</div><div class="line">output_0003.ts</div><div class="line">...略</div><div class="line">output_0058.ts</div><div class="line"><span class="selector-id">#EXTINF</span>:<span class="number">5.125000</span>,</div><div class="line">output_0059.ts</div><div class="line">#EXT-X-ENDLIST</div></pre></td></tr></table></figure></p>
+<p>Web サーバーを起動します。ここでは Mac OS X にプリインストールされている Python2 を使用します。</p>
+<p><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ python -m SimpleHTTPServer</div></pre></td></tr></table></figure></p>
+<p>Python2 の SimpleHTTPServer モジュールはデフォルトで <code>8000</code> 番ポートを使用するので、Safari で <a href="http://localhost:8000/output.m3u8" target="_blank" rel="external">http://localhost:8000/output.m3u8</a> にアクセスします。</p>
+<p><img src="/images/streaming-technology-basics-for-frontend-engineers/hls-playing.png" alt="Safari で HLS を再生"></p>
+<p>ここでアクセスする Web ブラウザに Safari を指定しているのは、Safari 以外のメジャーブラウザでは HLS をネイティブサポートしていないためです。Safari 以外のブラウザで HLS を再生するには、Flash などのプラグインを使用するか、後述する Media Source API を使用して、JavaScript で追加実装する必要があります。HLS はアップル社が開発したということもあり、Safari だけは m3u8 をロードしてそのまま再生することができます。</p>
+<h3>MPEG-DASH</h3>
+<p>MPEG-DASH は HLS と同様に通信に HTTP を使用したストリーミングプロトコルです。DASH は Dynamic Adaptive Streaming over HTTP の略です。Apple 社が開発した HLS のほかに Microsoft 社が開発した Smooth Streaming や Adobe が開発した HTTP Dynamic Streaming など HTTP ベースのストリーミングプロトコルがいくつかありますが、残念ながら各々互換性がありません。MPEG-DASH は ISO 国際標準規格 (ISO/IEC 23001-6) としてリリースされています。</p>
+<p>MPEG-DASH も HLS 同様、通常の Web サーバーと動画のセグメントファイルとプレイリストを用意するだけで配信ができてしまいます。MPEG-DASH ではセグメントファイルは fragmented mp4 もしくは ts 形式、プレイリストは MPD（Media Presentation Description）と呼ばれる XML で記述されたファイルを用意します。</p>
+<p><img src="/images/streaming-technology-basics-for-frontend-engineers/mpd.png" alt="MPD"></p>
+<h4>簡単な MPEG-DASH の配信を試してみる</h4>
+<p>MPEG-DASH 用のセグメントファイルとプレイリストを用意します。今回はセグメントファイルは fragmented mp4 を使用することにします。まず、ffmpeg を使って動画を fragmented mp4 で映像の圧縮に使う「H.264/AVC」と音声の圧縮に使う「AAC」というコーデックでリエンコードします。コーデックについては後述します。</p>
+<p><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">$ ffmpeg -i ./input.mp4 \</div><div class="line">  -vcodec libx264 \</div><div class="line">  -vb 500k \</div><div class="line">  -r 30 \</div><div class="line">  -x264opts no-scenecut \</div><div class="line">  -g 15 \</div><div class="line">  -acodec aac \</div><div class="line">  -ac 2 \</div><div class="line">  -ab 128k \</div><div class="line">  -frag_duration 5000000 \</div><div class="line">  -movflags frag_keyframe+empty_moov \</div><div class="line">  ./encoded.mp4</div></pre></td></tr></table></figure></p>
+<p>次に MP4Box というツールを使って、動画を分割してセグメントファイルとプレイリストを作成します。</p>
+<p><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">$ MP4Box -frag 4000 \</div><div class="line">  -dash 4000 \</div><div class="line">  -rap \</div><div class="line">  -segment-name sample \</div><div class="line">  -out ./output.mp4 \</div><div class="line">  ./encoded.mp4</div></pre></td></tr></table></figure></p>
+<p>プレイリスト <code>output.mpd</code> と <code>output.m4s</code> と連番になったセグメントファイル郡が作成されます。 <code>output.mpd</code> は下のようになっています。</p>
+<p><figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line"><span class="php"><span class="meta">&lt;?</span>xml version=<span class="string">"1.0"</span><span class="meta">?&gt;</span></span></div><div class="line"><span class="comment">&lt;!-- MPD file Generated with GPAC version 0.6.1-revrelease  at 2016-09-29T12:57:43.136Z--&gt;</span></div><div class="line"><span class="tag">&lt;<span class="name">MPD</span> <span class="attr">xmlns</span>=<span class="string">"urn:mpeg:dash:schema:mpd:2011"</span> <span class="attr">minBufferTime</span>=<span class="string">"PT1.500S"</span> <span class="attr">type</span>=<span class="string">"static"</span> <span class="attr">mediaPresentationDuration</span>=<span class="string">"PT0H9M56.466S"</span> <span class="attr">maxSegmentDuration</span>=<span class="string">"PT0H0M4.000S"</span> <span class="attr">profiles</span>=<span class="string">"urn:mpeg:dash:profile:full:2011"</span>&gt;</span></div><div class="line"> <span class="tag">&lt;<span class="name">ProgramInformation</span> <span class="attr">moreInformationURL</span>=<span class="string">"http://gpac.sourceforge.net"</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">Title</span>&gt;</span>./output.mpd generated by GPAC<span class="tag">&lt;/<span class="name">Title</span>&gt;</span></div><div class="line"> <span class="tag">&lt;/<span class="name">ProgramInformation</span>&gt;</span></div><div class="line"></div><div class="line"> <span class="tag">&lt;<span class="name">Period</span> <span class="attr">duration</span>=<span class="string">"PT0H9M56.466S"</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">AdaptationSet</span> <span class="attr">segmentAlignment</span>=<span class="string">"true"</span> <span class="attr">maxWidth</span>=<span class="string">"320"</span> <span class="attr">maxHeight</span>=<span class="string">"180"</span> <span class="attr">maxFrameRate</span>=<span class="string">"30"</span> <span class="attr">par</span>=<span class="string">"16:9"</span> <span class="attr">lang</span>=<span class="string">"und"</span>&gt;</span></div><div class="line">   <span class="tag">&lt;<span class="name">ContentComponent</span> <span class="attr">id</span>=<span class="string">"1"</span> <span class="attr">contentType</span>=<span class="string">"video"</span> /&gt;</span></div><div class="line">   <span class="tag">&lt;<span class="name">ContentComponent</span> <span class="attr">id</span>=<span class="string">"2"</span> <span class="attr">contentType</span>=<span class="string">"audio"</span> /&gt;</span></div><div class="line">   <span class="tag">&lt;<span class="name">Representation</span> <span class="attr">id</span>=<span class="string">"1"</span> <span class="attr">mimeType</span>=<span class="string">"video/mp4"</span> <span class="attr">codecs</span>=<span class="string">"avc3.640014,mp4a.40.2"</span> <span class="attr">width</span>=<span class="string">"320"</span> <span class="attr">height</span>=<span class="string">"180"</span> <span class="attr">frameRate</span>=<span class="string">"30"</span> <span class="attr">sar</span>=<span class="string">"1:1"</span> <span class="attr">audioSamplingRate</span>=<span class="string">"48000"</span> <span class="attr">startWithSAP</span>=<span class="string">"1"</span> <span class="attr">bandwidth</span>=<span class="string">"631708"</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">AudioChannelConfiguration</span> <span class="attr">schemeIdUri</span>=<span class="string">"urn:mpeg:dash:23003:3:audio_channel_configuration:2011"</span> <span class="attr">value</span>=<span class="string">"2"</span>/&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">SegmentList</span> <span class="attr">timescale</span>=<span class="string">"1000"</span> <span class="attr">duration</span>=<span class="string">"4000"</span>&gt;</span></div><div class="line">     <span class="tag">&lt;<span class="name">Initialization</span> <span class="attr">sourceURL</span>=<span class="string">"outputinit.mp4"</span>/&gt;</span></div><div class="line">     <span class="tag">&lt;<span class="name">SegmentURL</span> <span class="attr">media</span>=<span class="string">"output1.m4s"</span>/&gt;</span></div><div class="line">     <span class="tag">&lt;<span class="name">SegmentURL</span> <span class="attr">media</span>=<span class="string">"output2.m4s"</span>/&gt;</span></div><div class="line">     <span class="tag">&lt;<span class="name">SegmentURL</span> <span class="attr">media</span>=<span class="string">"output3.m4s"</span>/&gt;</span></div><div class="line">     ...略</div><div class="line">     <span class="tag">&lt;<span class="name">SegmentURL</span> <span class="attr">media</span>=<span class="string">"output149.m4s"</span>/&gt;</span></div><div class="line">     <span class="tag">&lt;<span class="name">SegmentURL</span> <span class="attr">media</span>=<span class="string">"output150.m4s"</span>/&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">SegmentList</span>&gt;</span></div><div class="line">   <span class="tag">&lt;/<span class="name">Representation</span>&gt;</span></div><div class="line">  <span class="tag">&lt;/<span class="name">AdaptationSet</span>&gt;</span></div><div class="line"> <span class="tag">&lt;/<span class="name">Period</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">MPD</span>&gt;</span></div></pre></td></tr></table></figure></p>
+<p>再び Web サーバーを起動します。</p>
+<p><figure class="highlight sh"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ python -m SimpleHTTPServer</div></pre></td></tr></table></figure></p>
+<p>HLS とは違い、残念ながら MPEG-DASH をネイティブでサポートしている Web ブラウザはありません。後程 Media Source Extensions を説明するときに MPEG-DASH プレイヤーを作成するので、そこで確認したいと思います。</p>
+<h2>HTML5 で扱うストリーミング</h2>
+<p>HLS と MPEG-DASH は HTML5 用の JavaScript API である Media Source Extensions を利用することで追加でプラグインをインストールすることなく、ストリーミング再生が可能です。</p>
+<h3>Media Source Extensions</h3>
+<p>Media Source Extensions は MSE と呼ばれていますので、本記事でも MSE と表記します。MSE は W3C によって標準化されている HTTP ダウンロードを利用してストリーミング再生するために作られた JavaScript API です。</p>
+<p>MSE で扱うメディアデータは、W3C で定められている仕様に従って、短い時間で区切ったデータ構造にセグメント化されている必要があります。MSE では、セグメントを 2 種類に分けて扱います。</p>
+<ul>
+<li>初期化に必要なヘッダ情報である初期化セグメント</li>
+<li>短い時間で区切られたメディアデータ本体が含まれるメディアセグメント</li>
+</ul>
+<p>MSE は最初に初期化セグメント、その後にメディアセグメントを順番にソース・バッファに渡すと、そのメディアセグメントの順番で再生していきます。</p>
+<h3>MSE で簡単な MPEG-DASH プレイヤーを作成してみる</h3>
+<p>ここでは <code>XMLHttpRequest</code> と <code>MediaSource</code> API を使用して簡単な MPEG-DASH プレイヤーを作成して、先程 ffmpeg と MP4Box で作った MPEG-DASH コンテンツを再生してみます。</p>
+<p>最初に <code>id</code> をつけた <code>video</code> 要素を用意します。</p>
+<p><figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">&lt;video id=<span class="string">"video"</span>&gt;<span class="xml"><span class="tag">&lt;/<span class="name">video</span>&gt;</span></span></div></pre></td></tr></table></figure></p>
+<p>次に <code>XMLHttpRequest</code> で MPD を取得します。MPD は XML ファイルなので、パースして <code>Representation</code> 要素から MIME タイプやコーデックの情報を取得しておきます。</p>
+<p><figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">var</span> type, mpd;</div><div class="line"></div><div class="line"><span class="keyword">var</span> xhr = <span class="keyword">new</span> XMLHttpRequest();</div><div class="line">xhr.open(<span class="string">"GET"</span>, <span class="string">"http://localhost:8000/output.mpd"</span>, <span class="literal">true</span>);</div><div class="line">xhr.responseType = <span class="string">"document"</span>;</div><div class="line">xhr.overrideMimeType(<span class="string">"text/xml"</span>);</div><div class="line">xhr.onload = <span class="function"><span class="params">e</span> =&gt;</span> &#123;</div><div class="line">  <span class="keyword">const</span> mpd = xhr.responseXML;</div><div class="line">  <span class="keyword">const</span> representation = mpd.getElementsByTagName(<span class="string">"Representation"</span>)[<span class="number">0</span>];</div><div class="line">  <span class="keyword">const</span> mimeType = representation.getAttribute(<span class="string">"mimeType"</span>);</div><div class="line">  <span class="keyword">const</span> codecs = representation.getAttribute(<span class="string">"codecs"</span>);</div><div class="line">  type = <span class="string">`<span class="subst">$&#123;mimeType&#125;</span>; codecs="<span class="subst">$&#123;codecs&#125;</span>"`</span></div><div class="line">  mpd = mpd;</div><div class="line">  initializeVideo(); <span class="comment">// 次の関数へ</span></div><div class="line">&#125;;</div><div class="line">xhr.send(<span class="literal">null</span>);</div></pre></td></tr></table></figure></p>
+<p>次に <code>MediaSource</code> API で最初に用意した <code>video</code> 要素を拡張し、ソースとしてダウンロードした動画のセグメントを追加できるようにします。</p>
+<p><figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">var</span> mediaSource;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">initializeVideo</span>(<span class="params"></span>) </span>&#123;</div><div class="line">  mediaSource = <span class="keyword">new</span> MediaSource();</div><div class="line">  <span class="keyword">const</span> video = <span class="built_in">document</span>.getElementById(<span class="string">"video"</span>);</div><div class="line"></div><div class="line">  mediaSource.addEventListener(<span class="string">"sourceopen"</span>, initializeSourceBuffer, <span class="literal">false</span>); <span class="comment">// mediaSource が開いたらソース・バッファを作成する</span></div><div class="line">  video.src = URL.createObjectURL(mediaSource);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>ソース・バッファを作成し、初期化情報が入ったセグメントとメディア本体のセグメントを追加できるように準備します。</p>
+<p><figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">var</span> sourceBuffer;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">initializeSourceBuffer</span>(<span class="params"></span>) </span>&#123;</div><div class="line">  sourceBuffer = mediaSource.addSourceBuffer(<span class="keyword">this</span>.type);</div><div class="line">  sourceBuffer.addEventListener(<span class="string">"updateend"</span>, appendMediaSegment, <span class="literal">false</span>);</div><div class="line">  appendInitializationSegment(); <span class="comment">// 次の関数へ</span></div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>先に取得した <code>mpd</code> から <code>Initialization</code> 要素の <code>sourceURL</code> の値を取得し、 <code>XMLHttpRequest</code> で取得します。セグメントファイルはバイナリデータなので、 <code>responseType</code> を<code>arraybuffer</code> に指定しておきます。</p>
+<p><figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">appendInitializationSegment</span>(<span class="params"></span>) </span>&#123;</div><div class="line">  <span class="keyword">const</span> xhr = <span class="keyword">new</span> XMLHttpRequest();</div><div class="line">  <span class="keyword">const</span> url = mpd.getElementsByTagName(<span class="string">"Initialization"</span>)[<span class="number">0</span>].getAttribute(<span class="string">"sourceURL"</span>);</div><div class="line">  xhr.open(<span class="string">"GET"</span>, <span class="string">`http://localhost:8000/media/<span class="subst">$&#123;url&#125;</span>`</span>, <span class="literal">true</span>);</div><div class="line">  xhr.responseType = <span class="string">"arraybuffer"</span>;</div><div class="line">  xhr.onload = appendSegment;</div><div class="line">  xhr.send(<span class="literal">null</span>);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>そしてセグメントをロードしたタイミングでソース・バッファに追加します。</p>
+<p><figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">appendSegment</span>(<span class="params">e</span>) </span>&#123;</div><div class="line">  sourceBuffer.appendBuffer(e.target.response);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>初期化情報がバッファに追加されソースが更新されたら、続けてメディア本体のセグメントファイルを取得し、ソース・バッファに追加します。この処理をメディアセグメントの数だけ繰り返します。</p>
+<p><figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">var</span> segmentIndex = <span class="number">0</span>;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">function</span> <span class="title">appendMediaSegment</span>(<span class="params"></span>) </span>&#123;</div><div class="line">  <span class="keyword">const</span> xhr = <span class="keyword">new</span> XMLHttpRequest();</div><div class="line">  <span class="keyword">const</span> url = mpd.getElementsByTagName(<span class="string">"SegmentURL"</span>)[segmentIndex++].getAttribute(<span class="string">"media"</span>);</div><div class="line">  xhr.open(<span class="string">"GET"</span>, <span class="string">`http://localhost:8000/media/<span class="subst">$&#123;url&#125;</span>`</span>, <span class="literal">true</span>);</div><div class="line">  xhr.responseType = <span class="string">"arraybuffer"</span>;</div><div class="line">  xhr.onload = appendSegment;</div><div class="line">  xhr.send(<span class="literal">null</span>);</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<h2>メディアセグメント - 動画とは何か</h2>
+<p>HLS や MPEG-DASH などのストリーミング配信では、セグメントファイルが実際の動画データになります。本記事の最初に書いた通り、動画データの容量は大きいです。ストリーミング配信の仕組みだけでは、動画の再生開始までの待ち時間は短かくすることはできても、再生を続けるために必要な１秒あたりのデータ量は減らすことはできません。ストリーミング再生では 1 秒あたりに必要なデータ量を少なくとも 1 秒以内に取得し続ける必要があります。でないと再生を継続できません。</p>
+<p>同じ情報量を表現するデータの容量を小さくしたい場合、データに圧縮処理をかけます。圧縮のアルゴリズムはいくつもありますが、動画は映像と音声で構成されているため、映像の圧縮に適したアルゴリズムと音声の圧縮に適したアルゴリズムは異なることを考慮する必要があります。映像圧縮に適したアルゴリズムで処理した映像ファイルと音声圧縮に適したアルゴリズムで処理した音声ファイルを１つのファイルとしてまとめたものが動画ファイルです。</p>
+<h2>コンテナとコーデック</h2>
+<p>動画ファイルは映像ファイルと音声ファイルをまとめたものと説明しましたが、このまとめ方の形式のことをコンテナフォーマットといいます。また、映像データや音声データを圧縮するアルゴリズムのことをコーデックといいます。</p>
+<p><img src="/images/streaming-technology-basics-for-frontend-engineers/containers-codecs.png" alt="コンテナとコーデック"></p>
+<h3>コンテナ</h3>
+<p>コンテナフォーマットは一般的にコンテナと略します。コンテナと呼ぶと難しそうですが、コンテナはファイルフォーマットの１種なので、私たちが普段動画ファイルとして意識している単位と一致します。ファイルフォーマットとはファイルの保存形式のことです。以下にリストしたものが代表的なコンテナですが、聞いたことがある名前が多いと思います。</p>
+<ul>
+<li>AVI</li>
+<li>MP4</li>
+<li>MOV</li>
+<li>MPEG</li>
+<li>MKV</li>
+<li>WMV</li>
+<li>FLV</li>
+<li>ASF</li>
+</ul>
+<p>コンテナは映像と音声データがどのように格納されるのかを定義しています。また動画は映像と音声を同時に再生する必要があるため、両者の同期を取るための情報もコンテナが格納しています。ほかにも動画タイトルや説明などのメタ情報、字幕などの情報もコンテナが格納されている場合があります。</p>
+<p>コンテナは対応しているコーデックの映像と音声データのみ格納することができます。１つのコンテナがいくつかのコーデックに対応している場合も多々あるので、コンテナの種類が分かっても格納されているコーデックの種類は分かりません。そのため、動画プレイヤーが同じコンテナで保存された２つの動画ファイルのうち、片方だけ再生できるということもあります。</p>
+<p>たとえば Flash 動画のコンテナである FLV は映像コーデックとして「Sorenson Spark」と「H.264/AVC」を格納できます。もし動画プレイヤーが「Sorenson Spark」には対応していても 「H.264/AVC」には対応していなかった場合、「Sorenson Spark」を格納している FLV ファイルは再生できても、「H.264/AVC」を格納している FLV ファイルはコーデックエラーが発生して再生できません。</p>
+<h3>コーデック</h3>
+<p>映像や音声は圧縮する必要があります。特にストリーミング再生などのデータ通信と再生を同時に行うような場合は必須です。コーデックはその圧縮のアルゴリズムです。</p>
+<p>なぜ映像を圧縮する必要があると言うと、映像はたくさんの静止画をパラパラマンガのようにめくって人間の目に物体や背景が動いているように見せているので、このたくさんの静止画は情報量として膨大なのです。</p>
+<p>映像を構成する画像データはラスタという色のついたピクセルの集合で表現します。1 ピクセルの情報量は 24 bit で表現できます（24bit フルカラーの場合、R -赤- G -緑- B -青- の各色成分につき 256 段階の指定ができるため、1 ピクセルは <code>Math.log2(256 * 256 * 256) = 24 bit</code> の情報量が必要）。</p>
+<p>そうすると例えば、フル HD の 1 フレームを構成する 1920 * 1080 ピクセルの情報量は 49,766,400 (= 24 * 1920 * 1080) bit になります。これはまだ 1 フレームなので、24 fps の動画の場合、1 秒間に 1,194,393,600 (= 49,766,400 * 24) bit が必要になります。</p>
+<p>これは 1 秒間に 1,194 Mbit のデータを通信を介して取得する必要があるということになります。しかし、例えば受信実効速度が 76.6Mbps と記載されているソフトバンク提供の超高速データ通信サービス <a href="http://www.softbank.jp/mobile/network/explanation/4glte/" target="_blank" rel="external">SoftBank 4G LTE</a> でデータ通信をした場合でも、 1 秒間に取得できるデータ量は 76.6 Mbit なので、先程の 1,194 Mbit に遠く及びません。</p>
+<p>しかし、この 1,194 Mbit の映像データは「H.264/AVC」というコーデックで圧縮した場合、典型的な圧縮率としては 1/100 のデータ量に圧縮することができます。すると 12 Mbit 程度になるので、76.6 Mbps のデータ通信速度でも視聴が可能になります。</p>
+<p>この「H.264/AVC」は AbemaTV でも映像コーデックとして使用していますが、映像コーデックにはほかにも以下のような種類があります。</p>
+<ul>
+<li>H.265</li>
+<li>VP8</li>
+<li>VP9</li>
+<li>MPEG-4</li>
+<li>WMV9</li>
+</ul>
+<p>ここでは映像コーデックしか取り上げませんが、音声コーデックは代表的なものに「AAC」や「MP3」があり、AbemaTV では「AAC」を使用しています。</p>
+<p>コーデックはデータ量を圧縮するものですが、ただデータ量を減らせればいいのではなく、人間が知覚できる範囲の画質や音質を落とすことなく圧縮しなくてはいけません。なので、選択するコーデックが悪いと画質や音質を落とすことになります。</p>
+<h2>AbemaTV で使用しているコンテナ MPEG-2 TS</h2>
+<p>「MPEG-2 TS」は MPEG-2 システムのうち放送・通信用のコンテナです。地上波デジタル放送でも使用されているコンテナですが、HLS でも「MPEG-2 TS」を使用します。DevTools の Network パネルを開いた状態で AbemaTV の動画を視聴しているとたくさんの <code>**.ts</code> という拡張子のデータがリクエストされるのが確認できます。これが「MPEG-2 TS」のファイルです。</p>
+<p>「MPEG-2 TS」は放送・通信用に作られたコンテナのため、通信途中でデータが途切れたとしてもちゃんと再生できるように設計されています。「MPEG-2 TS」では動画を 184 バイト単位のデータに分割し、それに 4 バイトの TS ヘッダと呼ばれるデータを付加して計 188 バイト固定長のパケットを連続で転送することでデータ伝送を行います。4 バイトの TS ヘッダのうち最後の 4bit は巡回カウンターと呼ばれるデータを持っていて、これがパケットごとに 1 ずつカウンターするため、これを検査することでパケットの欠落がないかを確認できるようになっています。</p>
+<p><img src="/images/streaming-technology-basics-for-frontend-engineers/ts-packet.png" alt="TS パケット"></p>
+<p>MPEG-2 システムには蓄積メディア用のコンテナとして別に「MPEG-2 PS」がありますが、こちらはデータが連続していることが前提なので、ランダムアクセスなどに優れた設計になっています。</p>
+<h2>AbemaTV で使っている映像コーデック H.264/AVC</h2>
+<p>AbemaTV では「MPEG-2 TS」コンテナに「H.264/AVC」コーデックで圧縮した映像データを格納しています。「H.264/AVC」は正式名称を「H.264」もしくは「MPEG-4 Part 10 Advanced Video Coding」といいます。（正式名称が２つあるのは ITU-T と ISO/IEC という２つの組織が共同で策定したものをそれぞれの名称をつけているだけです。）「MPEG-4」という名前が付けられている通り、その圧縮アルゴリズムの原理は、従来方式の「MPEG-1」、「MPEG-2」を継承しています。ここでは「MPEG」の圧縮アルゴリズムの原理を学んでいきます。</p>
+<h3>圧縮の基本</h3>
+<p>データを圧縮する基本は</p>
+<ul>
+<li>出現するデータパターンに偏りを持たせること</li>
+<li>出現頻度が高いパターンを短く表現すること</li>
+</ul>
+<p>です。単純な例で見ていきます。</p>
+<h4>出現頻度が高いパターンを短く表現する</h4>
+<p>たとえば、文字 a-d があったとき、それらを識別する符号を下記のように表現できます。</p>
+<table>
+<thead>
+<tr>
+<th>文字</th>
+<th>符号</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>a</td>
+<td>00</td>
+</tr>
+<tr>
+<td>b</td>
+<td>01</td>
+</tr>
+<tr>
+<td>c</td>
+<td>10</td>
+</tr>
+<tr>
+<td>d</td>
+<td>11</td>
+</tr>
+</tbody>
+</table>
+<p>文字列「bbabcbdbaacba」は「01 01 00 01 10 01 11 01 00 00 10 01 00」という符号で表現されます。この文字列を表現するのに必要なデータ量は 26(=2*13)bit です。この文字列にて、各々の文字の出現回数は均一ではありません。</p>
+<table>
+<thead>
+<tr>
+<th>文字</th>
+<th>出現回数</th>
+<th>出現率</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>a</td>
+<td>4</td>
+<td>0.31</td>
+</tr>
+<tr>
+<td>b</td>
+<td>7</td>
+<td>0.54</td>
+</tr>
+<tr>
+<td>c</td>
+<td>2</td>
+<td>0.15</td>
+</tr>
+<tr>
+<td>d</td>
+<td>1</td>
+<td>0.08</td>
+</tr>
+</tbody>
+</table>
+<p>そこで出現回数が 1 番多い b に 1 番短い符号、2 番目に多い a に次に短い符号を割り当ててみます。</p>
+<table>
+<thead>
+<tr>
+<th>文字</th>
+<th>符号</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>a</td>
+<td>10</td>
+</tr>
+<tr>
+<td>b</td>
+<td>0</td>
+</tr>
+<tr>
+<td>c</td>
+<td>110</td>
+</tr>
+<tr>
+<td>d</td>
+<td>111</td>
+</tr>
+</tbody>
+</table>
+<p>すると先程の文字列「bbabcbdbaacba」は「0 0 10 0 110 0 111 0 10 10 110 0 10」と表現されますが、データ量が 23bit に減りました。このように、データの出現頻度が均一ではなく偏りがあると、異なる長さの符号を割り当てることによりデータ量を圧縮することができます。</p>
+<p>このように可変長の符号を出現頻度に応じて割り当てることエントロピー符号といいますが、その割り当てパターンを作成する方法の 1 つに<strong>ハフマン符号</strong>があります。</p>
+<p><img src="/images/streaming-technology-basics-for-frontend-engineers/huffman.png" alt="ハフマン符号"></p>
+<p>この図のように出現確立が高いものからツリー上に符号を割り当てていきます。これにて全ての文字が一意かつ瞬時に解読できる少ないデータ量の符号を作成することができます。</p>
+<h4>出現するデータパターンに偏りを持たせる</h4>
+<p>一見出現率に偏りがない場合でも情報の表現方法を変えることでデータの出現頻度に偏りを持たせることができます。</p>
+<p>たとえば、「1 2 3 2 1 0 -1 -2」のような数列はそのままだと下記のような出現回数ですが、</p>
+<table>
+<thead>
+<tr>
+<th>数字</th>
+<th>出現回数</th>
+<th>出現率</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>-2</td>
+<td>1</td>
+<td>0.125</td>
+</tr>
+<tr>
+<td>-1</td>
+<td>1</td>
+<td>0.125</td>
+</tr>
+<tr>
+<td>0</td>
+<td>1</td>
+<td>0.125</td>
+</tr>
+<tr>
+<td>1</td>
+<td>2</td>
+<td>0.25</td>
+</tr>
+<tr>
+<td>2</td>
+<td>2</td>
+<td>0.25</td>
+</tr>
+<tr>
+<td>3</td>
+<td>1</td>
+<td>0.125</td>
+</tr>
+</tbody>
+</table>
+<p>これを前の数字との差分として表現すると「1 2 3 2 1 0 -1 -2」→「0 +1 +1 -1 -1 -1 -1 -1」となり、データの出現頻度に大きな偏りを作ることができました。</p>
+<table>
+<thead>
+<tr>
+<th>差分</th>
+<th>出現回数</th>
+<th>出現率</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td>1</td>
+<td>0.125</td>
+</tr>
+<tr>
+<td>+1</td>
+<td>2</td>
+<td>0.25</td>
+</tr>
+<tr>
+<td>-1</td>
+<td>5</td>
+<td>0.625</td>
+</tr>
+</tbody>
+</table>
+<p>これをハフマン符号することでデータを圧縮することができます。</p>
+<h3>MPEG の圧縮</h3>
+<p>文字列や数列データの圧縮の例について見てきましたが、動画圧縮の場合も基本的な考え方は同様です。しかし、MPEG の場合は動画特有の性質を利用して圧縮率を高める工夫をしています。</p>
+<p>MPEG の圧縮アルゴリズムは静止画の圧縮と映像の圧縮で構成されています。</p>
+<ul>
+<li>静止画自体のデータサイズを圧縮する</li>
+<li>連続する映像フレームのデータの差分だけを記録する</li>
+</ul>
+<h3>静止画の圧縮</h3>
+<p>MPEG の静止画の圧縮アルゴリズムの基礎は画像圧縮規格である「JPEG」です。<code>**.jpg</code> の拡張子で馴染のアレです。</p>
+<p>静止画の圧縮アルゴリズムは簡単に以下のようなことを行います。</p>
+<ul>
+<li>画像は隣り合うピクセルが似ているという特徴を利用して差分情報だけで表現する</li>
+<li>人間の目が変化に鈍感な情報を省略する</li>
+<li>エントロピー符号する</li>
+</ul>
+<h4>画像は隣り合うピクセルが似ている</h4>
+<p>たとえば空の写真を撮影した場合、その画像を構成するピクセルの多くは空の青色と雲の白色の微妙な色味の変化になると思います。空ほど色数が少なくない写真や絵の場合でも、基本的に画像は色が段階的にしか変化していないピクセルの方が出現頻度が圧倒的に多く、急な変化の頻度は少ないはずです。</p>
+<p><img src="/images/streaming-technology-basics-for-frontend-engineers/xsky_00001.jpg" alt="空"></p>
+<p>この画像の性質を利用して、画像データの出現頻度に偏りを作って符号化することを <strong>DPCM 符号化</strong>といいます。</p>
+<h4>人間の目が変化に鈍感な情報を省略する</h4>
+<p>MPEG は<strong>離散コサイン変換</strong>という演算を行うことで、人間の目にあまり目立たない細かい情報をデータから取り除いてしまうことで圧縮率を上げています。離散コサイン変換は英語では Discrete Cosine Transform というので DCT と略されます。</p>
+<p>DCT では画像を波形として扱い、フーリエ変換のように周波数ごとの波の強度で画像を表現します。ここで高い周波数の波は人間の目にあまり目立たない情報となるので、省略してしまうことで画質への影響を最小限に抑えながら圧縮率を高めることが可能になります。</p>
+<p><img src="/images/streaming-technology-basics-for-frontend-engineers/DCT.png" alt="DCT"></p>
+<h4>エントロピー符号</h4>
+<p>ここまで静止画の圧縮について、DPCM 符号化と DCT の処理を見てきましたが、これらで求められた値をエントロピー符号することで更に圧縮効率を高めます。</p>
+<h3>映像の圧縮</h3>
+<p>静止画の圧縮では、映像における 1 枚 1 枚のフレームのデータ量を削減しました。映像の圧縮では、時間の流れを利用してデータの圧縮率を高める工夫をしています。</p>
+<h4>画素の省略</h4>
+<p>MPEG では画素情報を RGB ではなく、<strong>輝度信号（Y）</strong>、 <strong>色差信号（Cr）（Cb）</strong> で表現します。RGBの各成分、輝度信号（Y）、色差信号（Cr）（Cb）の関係は下記です。</p>
+<p><figure class="highlight lsl"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">Y = <span class="number">0.299</span>*R + <span class="number">0.587</span>*G + <span class="number">0.114</span>*B</div><div class="line">Cr = <span class="number">0.500</span>*R - <span class="number">0.419</span>*G - <span class="number">0.081</span>*B</div><div class="line">Cb = <span class="number">-0.169</span>*R - <span class="number">0.332</span>*G + <span class="number">0.500</span>*B</div></pre></td></tr></table></figure></p>
+<p>人間の目は明るさの変化に対しての方が色の変化に対してより敏感です。MPEG ではその人間の視覚の癖を利用し、フレームごとに Cr と Cb 信号を画素の情報から省いています。Cr と Cb が少々省かれたとしても 明るさの情報である Y が省かれていなければ、人はそれ程違和感を感じないのです。</p>
+<p><img src="/images/streaming-technology-basics-for-frontend-engineers/y-cr-cb.png" alt="CrCb の省略"></p>
+<h4>フレーム間予測</h4>
+<p>静止画の場合と似ていますが、映像の場合も時間的に隣合うフレームが持つ画像は似ているはずです。MPEG はその映像の特徴を利用して、映像のフレームにその画像を表示するための全ての情報を持たせません。MPEG には 3 種類のフレームがあります。</p>
+<ul>
+<li>I ピクチャ</li>
+<li>P ピクチャ</li>
+<li>B ピクチャ</li>
+</ul>
+<p><strong>I ピクチャ</strong>を除いて、他のフレームが持ってる情報と自身が持ってる情報を合わせて画像を表示することができるようになります。この 3 種類はそれぞれ役割りが違います。<strong>I ピクチャ</strong>は画像を表示するための全ての情報を持っています。<strong>P ピクチャ</strong>は過去に表示した<strong>I ピクチャ</strong>もしくは<strong>P ピクチャ</strong>が持っていたデータとその差分データを使用して画像を表示します。<strong>B ピクチャ</strong>は過去だけではなく未来の<strong>I ピクチャ</strong>もしくは<strong>P ピクチャ</strong>が持っているデータを利用することでより圧縮率を高めます。</p>
+<p><img src="/images/streaming-technology-basics-for-frontend-engineers/ipb-pictures.png" alt="I/P/B ピクチャ"></p>
+<h2>まとめ</h2>
+<p>動画は昔からある技術分野ですが、Web のフロントエンドエンジニアだった自分には足を踏み込んだら分からないことだらけの難しい分野だと感じました。しかし、最近はストリーミング関連の技術も進み、Web においても動画を扱った事業に関わることが増えてきています。本記事は社内勉強会向けですが、フロントエンドエンジニア視点から動画を学んでいくスタートポイントになればと思います。</p>
+<h2>参考</h2>
+<p><strong>HTTP Live Streaming</strong></p>
+<p><a href="https://en.wikipedia.org/wiki/HTTP_Live_Streaming" target="_blank" rel="external">https://en.wikipedia.org/wiki/HTTP_Live_Streaming</a></p>
+<p><strong>H.264</strong></p>
+<p><a href="https://ja.wikipedia.org/wiki/H.264" target="_blank" rel="external">https://ja.wikipedia.org/wiki/H.264</a></p>
+<p><strong>MPEG-2システム</strong></p>
+<p><a href="https://ja.wikipedia.org/wiki/MPEG-2%E3%82%B7%E3%82%B9%E3%83%86%E3%83%A0" target="_blank" rel="external">https://ja.wikipedia.org/wiki/MPEG-2%E3%82%B7%E3%82%B9%E3%83%86%E3%83%A0</a></p>
+<p><strong>HLSとは</strong></p>
+<p><a href="http://qiita.com/STomohiko/items/eb223a9cb6325d7d42d9" target="_blank" rel="external">http://qiita.com/STomohiko/items/eb223a9cb6325d7d42d9</a></p>
+<p><strong>ffmpeg で mp4 をiPhone用のストリーミング（HLS）に対応させる。</strong></p>
+<p><a href="http://takuya-1st.hatenablog.jp/entry/2016/04/06/034906" target="_blank" rel="external">http://takuya-1st.hatenablog.jp/entry/2016/04/06/034906</a></p>
+<p><strong>MPEG DASHを知る</strong></p>
+<p><a href="http://qiita.com/gabby-gred/items/c1a3dbe026f83dd7e1ff" target="_blank" rel="external">http://qiita.com/gabby-gred/items/c1a3dbe026f83dd7e1ff</a></p>
+<p><strong>MPEG-DASH content generation with MP4Box and x264</strong></p>
+<p><a href="https://bitmovin.com/mp4box-dash-content-generation-x264/" target="_blank" rel="external">https://bitmovin.com/mp4box-dash-content-generation-x264/</a></p>
+<p><strong>Media Source Extensionsを使ってみた (MP4編)</strong>
+<a href="http://qiita.com/tomoyukilabs/items/54bd151aba7d3edf8946" target="_blank" rel="external">http://qiita.com/tomoyukilabs/items/54bd151aba7d3edf8946</a></p>
+<p><strong>動画・音声の規格について ~コーデック・コンテナ~</strong></p>
+<p><a href="http://michisugara.jp/archives/2011/video_and_audio.html" target="_blank" rel="external">http://michisugara.jp/archives/2011/video_and_audio.html</a></p>
+<p><strong>VIDEO-ITを取り巻く市場と技術</strong></p>
+<p><a href="http://www.mpeg.co.jp/libraries/video_it/index.html" target="_blank" rel="external">http://www.mpeg.co.jp/libraries/video_it/index.html</a></p>
+<p><strong>動画形式の種類と違い（AVI･MP4･MOV･MPEG･MKV･WMV･FLV･ASF等）【コンテナ】</strong></p>
+<p><a href="http://aviutl.info/dougakeisiki-konntena/" target="_blank" rel="external">http://aviutl.info/dougakeisiki-konntena/</a></p>
+<p><strong>【動画が再生できない!?】そんなときに必ず役立つ5つの知識</strong></p>
+<p><a href="http://smarvee.com/column/can-not-play/" target="_blank" rel="external">http://smarvee.com/column/can-not-play/</a></p>
+<p><strong>「映像がH.264/AVCでエンコードされたFLV」を「FLV5」と呼ぶのは間違い</strong></p>
+<p><a href="http://goldenhige.cocolog-nifty.com/blog/2009/10/h264avcflvflv5-.html" target="_blank" rel="external">http://goldenhige.cocolog-nifty.com/blog/2009/10/h264avcflvflv5-.html</a></p>
+<p><strong>量子化行列のナゾ～その１</strong></p>
+<p><a href="http://www.nnet.ne.jp/~hi6/lab/quantize/" target="_blank" rel="external">http://www.nnet.ne.jp/~hi6/lab/quantize/</a></p>
+<p><strong>モニタ解像度 図解チャート＆一覧 / monitor resolution data sheet&amp;chart</strong></p>
+<p><a href="http://www.quel.jp/etc/monitor-size/" target="_blank" rel="external">http://www.quel.jp/etc/monitor-size/</a></p>
+</div><div class="post__share"><a href="https://twitter.com/share" data-text="フロントエンドエンジニアのための動画ストリーミング技術基礎" data-url="https://ygoto3.com/posts/streaming-technology-basics-for-frontend-engineers/" data-via="ygoto3_" class="twitter-share-button">Tweet</a><script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');
+</script><div data-href="https://ygoto3.com/posts/streaming-technology-basics-for-frontend-engineers/" data-layout="button" class="fb-share-button"></div></div></article><article class="post"><header><a href="/posts/make-style-guide-easy/" class="post__title"><h2>フロントエンド視点：デザイナーと協業して作るスタイルガイドの難易度を下げる</h2></a></header><div class="post__date">May 18, 2016</div><div class="post__entry"><p>前回 <a href="/posts/atomic-design-on-actual-project/">Atomic Design を実案件に導入した話</a>で触れたコンポーネントリストを作り始めたとき、個人的にいろいろと学びがありました。</p>
+<p>コンポーネントリストやスタイルガイドは、フロントエンドエンジニアとデザイナーが協業して作る必要がありますが、この協業がなかなかうまくいかず、スタイルガイド運用をワークさせるのは難易度が高い印象がありました。</p>
+<p>自分自身、今まで携ってきた開発プロジェクトにおいて、うまくワークしたと思えるスタイルガイド作りができなかったのですが、<a href="https://abema.tv/" target="_blank" rel="external">現在のプロジェクト</a>で開発初期からスタイルガイドを作り、リリース後、運用フェーズまでワークさせることができました。</p>
+<p>本記事ではフロントエンドエンジニアとデザイナーが協業してスタイルガイドを作り始めるにあたって気をつけたことについて書いていきます。</p>
+<h2>共通言語としてのスタイルガイド</h2>
+<p>開発において、スタイルガイドが欲しい理由は、開発中のコミュニケーションにおいて、デザインを言語化できないことが多いからです。スタイルガイドの役割はデザイナー以外の職種にも通じる（デザイン要素に関する）共通言語として働くことです。そしてたぶんメインデザイナーとそれ以外のデザイナー間での共通言語としても働いてくれると思います。</p>
+<p>１つの作業を２者で行う場合、２者の間に共通言語がないと、コミュニケーションコストは一気に高くなります。今の職場では、基本的にデザインとフロントエンドエンジニアリングは分業しているので、デザイナーがエンジニアリングを理解するか、エンジニアがデザインを理解するか、いずれかの状況でない限り（もしくはその状況であったとしても）、コミュニケーションコストは高いです。それを下げる意味でスタイルガイドを作ることは開発において大きな意味を持ちます。</p>
+<h2>スタイルガイドは死にやすい</h2>
+<p>しかし、たとえ本格的に開発が始まる前にスタイルガイドを作ったとしても、スタイルガイドがプロダクトのデザインで使えるものになっていなければ、いずれ誰からも参照されない状態になってしまいます。</p>
+<p>過去に別のサービスを作っていた際、開発速度を上げるため最初にスタイルガイド／コンポーネントリストを定義し、 それを PSD ファイルで管理するようにしました。以降、画面デザインはそのコンポーネントを使って行う手法を試みました。しかし、残念ながらそのコンポーネントをそのまま使うことは少なかったです。</p>
+<p>デザイナーがプロダクトの画面デザインを先に行うことなく、プロダクトの画面上で実際に起こる問題に対して、デザイン的な解決を汎用的なコンポーネントに落とし込むことができなかったからです。実際に画面上に定義したコンポーネントを置いたときに、解決すべき問題が解決できないことが頻発しました。</p>
+<p>問題の解決を行うに足りるコンポーネントがないと、新しいコンポーネントを別途作るしかないので、コンポーネントは延々と増え続け、管理できなくなり、そのサービスをリリースする頃には誰もスタイルガイドを見ることはなくなっていました。</p>
+<h2>予想以上に開発初期にスタイルガイドを作ることは難しい</h2>
+<p>タイトなスケジュールでスタイルガイドを見直す時間もなかったのと、見直すこと自体を開発フローに組み込んでいなかったため、スタイルガイドは作っただけで意味のないものになってしまいました。</p>
+<p>レギュレーションをしっかり決めた方が今後のデザインにブレがなくなるだろうという想いもあり、最初からスタイルガイドにいろいろと定義をつめこみすぎたために（そしてその定義が完璧とは程遠いため）、デザイナーも窮屈になってしまったのだと思います。デザイナーが早々にスタイルガイドを参照することをやめてしまっていました。</p>
+<p>自分たちが思っていた以上にスタイルガイドを最初から完璧に作ることは難しかったのです。</p>
+<h2>エンジニア主導だったスタイルガイド作り</h2>
+<p>そしてエンジニア主導でスタイルガイドを作った点もスタイルガイドが死んでいった要因だったように思います。そのときのデザイナーはスタイルガイドを作ることにあまり利点を感じていなかったように思います。今思えば、自分たちエンジニアも、デザイナーにスタイルガイドの利点を伝えきれていなかったと思うので、当然かもしれません。スタイルガイドがある開発フローに対して成功体験がなかったので、伝えきれるわけもないとも思います。</p>
+<p>特に開発初期は、エンジニアが主導になってスタイルガイドを完璧に作ることはほぼ無謀に近いでしょう。これから実際にデザインを考えていくのはデザイナーです。しかし、スタイルガイドを作るというモチベーションはエンジニア側にあることが（少なくとも自分の周りでは）多いように感じます。</p>
+<p>スタイルガイドを作るモチベーションがデザイナーよりエンジニア側にある場合、エンジニアは主導になるのではなく、ファシリテーターとして動くように意識すべきだったなと思います。</p>
+<p>もろもろの後悔もあって、今のプロジェクトで開発を開始した時、なんとかリリースまで生き続けるスタイルガイドを作ろうと思いました。とりあえずちょっとした成功体験があるだけでも今後の視野が変わりそうだなと。</p>
+<h2>デザイナー以外でもデザインを判断できる状況を目指す</h2>
+<p>フロントエンドエンジニアの視点で言うと、デザインに関して、デザイナーしか判断できない事柄が多すぎるのは大きなツラミです。デザイナーしか判断できない状況は、Photoshop や Sketch のデータから読み取れない事柄において、全てデザイナーに判断を仰ぐ必要がある状態です。それはとてつもなくコミュニケーションコストが高いのです。コミュニケーションコストが高いからと言って、エンジニアが勝手に解釈して実装してしまえば、デザイナーに意図に沿わず、結局実装後に修正することになり、更に工数が膨れます。</p>
+<p>コミュニケーションコストを下げるためにも、デザイナーの頭の中がプロジェクト全体に共有され、簡単なことであれば徐々にエンジニアでもデザインに関する判断を下せるようになっていけるのが理想です。生きたスタイルガイドがあれば、デザイン要素に関する最低限の判断は誰でもできる状態にすることができます。仕組みによって、判断しなくて良い状況を増やすからです。</p>
+<p>そしてスタイルガイドを作る過程では、デザインを論理的な言葉に置き替えていく必要もあるため、その作業をエンジニアが一緒に行うことでデザイナーがビジュアルを通じてユーザーに伝えようとしている意図を言葉で理解する手助けになります。</p>
+<h2>箱だけスタイルガイドを作る</h2>
+<p>過去の後悔を踏まえつつ、デザイナーとエンジニアが無理なく協業できる方法を工夫しようと考えました。特にデザイナーに負担が少ないように、できるだけ最初は既存のデザインフローを変えないように心掛けました。</p>
+<ul>
+<li>スタイルガイドは最初から定義しすぎないようにする</li>
+<li>作りながら定義を追加していく</li>
+</ul>
+<p>開発開始時はスタイルガイドには何も定義がされていない状態にしました。ただ、これから定義していく項目だけ決めておくことにしました。中身がない箱だけ用意したイメージです。決める項目というのは、一般的な Web アプリケーションに最低限必要そうな要素です。</p>
+<ul>
+<li>アプリケーションの基本的な背景色や文字色、ボタン色などのカラーコードを今後決める</li>
+<li>要素感の余白のサイズやフォントサイズ、ボーダーの幅、角丸の大きさを今後決める</li>
+<li>ＵＩアニメーションの長さやイージングを今後決める</li>
+</ul>
+<p>などです。今後決める、となっているのは、背景色やフォントサイズなどの値はこの時点で決めないからです。この時点では今後決める項目だけを決めます。</p>
+<p>このタイミングで挙げた項目のほかにも必要になる項目は出てくるとは思いますが、必要になったときに追加すれば良いと割り切りました。定義する項目の粒度がパターンとして分かる程度にしておきます。こうしておくことで後から追加する項目の粒度も揃いやすくなります。</p>
+<h2>スタイルガイドのたたきを Sketch で作る</h2>
+<p>上記の項目を箱として用意し、実際の値としては定義していない状態で、スタイルガイドを Sketch データにします。</p>
+<p><img src="/images/make-style-guide-easy/style-guide-sketch.png" alt="スタイルガイド Sketch データ"></p>
+<p>上の画像で <code>NO SET</code> となっているところが実際の値が定義されていない項目です。この時点で決まっている値があれば定義し、決まっていない、分からない値については無理に決めず、 <code>NO SET</code> としておきます。</p>
+<p>そして、Sketch で設定した値を CSS のカスタムプロパティとして設定します。（今回のプロジェクトでは cssnext を使用しているため、カスタムプロパティとして設定しました。Sass や Stylus などでも変数で設定しても良いかもしれません。）</p>
+<p><figure class="highlight scss"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div></pre></td><td class="code"><pre><div class="line">:root &#123;</div><div class="line"></div><div class="line">  <span class="comment">/* background */</span></div><div class="line">  --bg-regular: <span class="number">#000000</span>;</div><div class="line">  --bg-highlight: <span class="number">#f0163a</span>;</div><div class="line">  --bg-hover: <span class="number">#191919</span>;</div><div class="line">  --bg-active: none;</div><div class="line"></div><div class="line">  <span class="comment">/* background - light */</span></div><div class="line">  --lt-bg-regular: <span class="number">#ffffff</span>;</div><div class="line">  --lt-bg-highlight: <span class="number">#f0163a</span>;</div><div class="line">  --lt-bg-hover: <span class="number">#fafafa</span>;</div><div class="line">  --lt-bg-active: <span class="number">#fafafa</span>;</div><div class="line"></div><div class="line">  <span class="comment">/* font size */</span></div><div class="line">  --<span class="attribute">font-size</span>-xxl: <span class="number">22px</span>;</div><div class="line">  --<span class="attribute">font-size</span>-xl: <span class="number">18px</span>;</div><div class="line">  --<span class="attribute">font-size</span>-l: <span class="number">16px</span>;</div><div class="line">  --<span class="attribute">font-size</span>-m: <span class="number">14px</span>;</div><div class="line">  --<span class="attribute">font-size</span>-s: <span class="number">13px</span>;</div><div class="line">  --<span class="attribute">font-size</span>-xs: <span class="number">12px</span>;</div><div class="line">  --<span class="attribute">font-size</span>-xxs: <span class="number">11px</span>;</div><div class="line"></div><div class="line">  <span class="comment">/* font color */</span></div><div class="line">  --<span class="attribute">font</span>-<span class="attribute">color</span>-regular: <span class="number">#eeeeee</span>;</div><div class="line">  --<span class="attribute">font</span>-<span class="attribute">color</span>-success: none;</div><div class="line">  --<span class="attribute">font</span>-<span class="attribute">color</span>-danger: <span class="number">#f0163a</span>;</div><div class="line">  --<span class="attribute">font</span>-<span class="attribute">color</span>-warning: <span class="number">#f0163a</span>;</div><div class="line">  --<span class="attribute">font</span>-<span class="attribute">color</span>-info: <span class="number">#8c8c8c</span>;</div><div class="line">  --<span class="attribute">font</span>-<span class="attribute">color</span>-<span class="selector-tag">link</span>: <span class="number">#6fb900</span>;</div><div class="line">  --<span class="attribute">font</span>-<span class="attribute">color</span>-<span class="selector-tag">link</span>-hover: <span class="number">#c5c5c5</span>;</div><div class="line">  --<span class="attribute">font</span>-<span class="attribute">color</span>-active: none;</div><div class="line"></div><div class="line">  <span class="comment">/* font color - light */</span></div><div class="line">  --lt-<span class="attribute">font</span>-<span class="attribute">color</span>-regular: <span class="number">#1a1a1a</span>;</div><div class="line">  --lt-<span class="attribute">font</span>-<span class="attribute">color</span>-success: none;</div><div class="line">  --lt-<span class="attribute">font</span>-<span class="attribute">color</span>-danger: <span class="number">#f0163a</span>;</div><div class="line">  --lt-<span class="attribute">font</span>-<span class="attribute">color</span>-warning: <span class="number">#f0163a</span>;</div><div class="line">  --lt-<span class="attribute">font</span>-<span class="attribute">color</span>-info: <span class="number">#8c8c8c</span>;</div><div class="line">  --lt-<span class="attribute">font</span>-<span class="attribute">color</span>-<span class="selector-tag">link</span>: <span class="number">#6fb900</span>;</div><div class="line">  --lt-<span class="attribute">font</span>-<span class="attribute">color</span>-<span class="selector-tag">link</span>-hover: <span class="number">#c5c5c5</span>;</div><div class="line">  --lt-<span class="attribute">font</span>-<span class="attribute">color</span>-active: none;</div><div class="line"></div><div class="line">  ...</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>上のコードで <code>none</code> となっているところは、Sketch で <code>NO SET</code> としたところと同じ意味です。定義できている値のみ設定して、定義できていないものはプロパティ名だけ用意しておいて <code>none</code> を設定しておきます。</p>
+<p>プロダクトの UI コンポーネントにあてる CSS は基本的にこのカスタムプロパティを参照し、特別な理由がない限り、値をハードコードすることを避けるようにします。</p>
+<p>ここで、最初に Sketch でスタイルガイドを作るのは、Sketch から始める方がデザイナーが心理的な障壁なく作業に入りやすいためです。最終的にスタイルガイドは HTML で管理する方がプロダクトのコードと同期しやすいので、本当は Sketch を介さず、最初から CSS のカスタムプロパティと HTML でドキュメント化できると、効率は良さそうにも思います。ただ、ステップをファシリテートするという意味では、Sketch や Photoshop などから始める方が良いように個人的には思い、今回のプロジェクトでは Sketch から始めました。</p>
+<h2>Interface Inventory を実践しながら箱を埋めていく</h2>
+<p>ここまでで、今後決める項目は決めることができたので、ここからは項目に実際の値を入れていきます。箱を埋めていく作業です。箱を埋める作業は各画面のデザインカンプを作りながら、必要に応じて進めていきます。</p>
+<p><a href="/posts/atomic-design-on-actual-project/">前回の投稿</a>で、<a href="http://bradfrost.com/blog/post/interface-inventory/" target="_blank" rel="external">Interface Inventory</a> をゆるく実践したと書きましたが、このように、デザイナーにはデザインカンプを通常通り作ってもらいながら、カンプ上で使用した色やフォントサイズなどで、定義していない値を使うたびに適切な項目への値として埋めていくようにしてもらいました。</p>
+<p>フロントエンドエンジニアもカスタムプロパティを参照して CSS を書くので、定義されていない値がカンプに出現した場合は、デザイナーと話してその値をどの項目として定義するかを決めてから実装することにします。これを繰り返してスタイルガイドに定義する値を徐々に埋めていくことになります。</p>
+<p>デザイナーの中には画面上に色などのデザイン要素を配置するとき、感覚で配置されている方もいると思います。そういったデザイナーとの協業だった場合でも、最初に埋めるべき箱がデザイン要素としての意味を持った名前とともに用意されているので、名前の意味と異なるカラーコードが出てきたら、そのカラーコードを見直すきっかけになります。</p>
+<p>そして、既存のどの箱にも適切に入らない値が出てきたタイミングにのみ、新しい箱を用意します。</p>
+<h2>新規の箱は既存の箱と十分と向き合ってから作る</h2>
+<p>新しい箱に入れる必要がある新規の値がデザインカンプ上に出現した時に意識したいのが、箱を本当に新規で追加する価値があるのかを再度デザイナーと考えてみることです。今回も、既存の箱に入っている値では本当に画面上の問題を解決することができないのかということをデザイナーと時間をかけて一緒に考えました。</p>
+<p>箱が増えるということは、プロダクトを通してのトンマナがブレるリスクがあるだけでなく、UI を通して送るユーザーへのメッセージの種類が増えることになります。基本的にユーザーへのメッセージの種類はシンプルな方が良いので、増やさなくて良いのであれば、それに越したことはありません。意図したメッセージが適切に伝わりづらくなるというリスクが増すからです。</p>
+<h2>箱は適切な抽象度を意識する</h2>
+<p>それでも新規の箱が必要になった場合、箱の名前は適切な抽象度を保っているかを注意します。新規の箱は、それが必要になったデザインカンプの画面のコンテキストにすごく影響されて命名してしまうことが多いです。例えば、コメント一覧 UI の画面デザインで新規に必要になった背景色のカラーコードに対する箱の名前を <code>--bg-comment</code> と命名するなどです。</p>
+<p>「コメントの背景」という名前では画面の UI 上でどんなデザイン的にどんな働きをするのかが分かりません。もちろん、コメント系モジュールの背景はどんな画面にレイアウトしたとしても同じ色で統一するのであれば問題ないかもしれません。その色がコメントを表す特別な色という意味を持っているということであれば、 <code>--bg-comment</code> という名前も適切かもしれませんが、実際は別の画面になればコメントより目立たせたい要素が別にあるなど、コメント系モジュールであっても、別の色が適切な場合は多いはずです。</p>
+<p>その場合はデザイン的な働きを適切な抽象度を持った名前で表現することが大事だと思います。その画面上でユーザーに最も注目してもらいたい要素であれば、 <code>--bg-highlight</code> という名前で コメント一覧モジュールの背景を塗るのが適切でしょう。</p>
+<p>新規の箱に具体的な名前をつけて別項目として設定しまうことは簡単です。なので、その誘惑に駆られることは何度もありました。しかし、そうやってつけられた名前は適切な抽象度を持たないため、別の画面では使われない可能性が高くなる上に、別の箱を作る要因になるので、あっという間に人が管理できない個数へと箱が増えてしまいます。</p>
+<p>適切な抽象度とは、色でいうと、基本色や強調色、警告色といったアプリケーションにおいて普遍な要素名に対してサービスのキャラクターづけがされた値を設定するようにします。これより具体性が高い要素名は、カンプ上に配置されたコンテキストに強く影響されている可能性が高いので、デザインレビュー時に再度名前の見直しをするようにしました。</p>
+<p>サービスにおいてコアバリューに近いものに関しては具体性が高い要素名が適切な場合があるかもしれません。先程の例で言うと、コメント機能がサービスのコアバリューでほかの要素とは完全に差別化し、どの画面にいてもコメントが特別だと分かるように色を一色に統一したい、という場合は具体的な名前が適切でしょう。ただそういった名前は、サービス１つにつき多くても１、２個のように思います。</p>
+<h2>明パターンと暗パターンの箱を用意する</h2>
+<p>プロダクトの強調色や警告色など、全ての色は２パターン決めておくとよいです。スタイルガイドは背景色を白で用意することが多いと思いますが、もしプロダクトのベースが白であっても、配置するモジュール郡の中には暗い色のものもあると思います。</p>
+<p>スタイルガイドで定義したカラーコードが、これら暗い色のモジュールを考慮していないと、明度差が足りなくて視認性や可読性が下がったりして、強調色が強調色として働かない可能性が出てきます。</p>
+<p>そこでスタイルガイドには最初から明るいパターンの背景上に乗るもの用と暗いパターンの背景上に乗るもの用を用意しておき、色系の要素には常に２パターンの箱がある状態にしました。</p>
+<p><img src="/images/make-style-guide-easy/light-dark-uis.png" alt="Sketch 明パターンと暗パターン"></p>
+<p>CSS のカスタムプロパティも２パターン用意します。</p>
+<p><figure class="highlight scss"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/* font color - dark */</span></div><div class="line">--<span class="attribute">font</span>-<span class="attribute">color</span>-regular: <span class="number">#eeeeee</span>;</div><div class="line">--<span class="attribute">font</span>-<span class="attribute">color</span>-success: none;</div><div class="line">--<span class="attribute">font</span>-<span class="attribute">color</span>-danger: <span class="number">#f0163a</span>;</div><div class="line">--<span class="attribute">font</span>-<span class="attribute">color</span>-warning: <span class="number">#f0163a</span>;</div><div class="line">--<span class="attribute">font</span>-<span class="attribute">color</span>-info: <span class="number">#8c8c8c</span>;</div><div class="line">--<span class="attribute">font</span>-<span class="attribute">color</span>-<span class="selector-tag">link</span>: <span class="number">#6fb900</span>;</div><div class="line">--<span class="attribute">font</span>-<span class="attribute">color</span>-<span class="selector-tag">link</span>-hover: <span class="number">#c5c5c5</span>;</div><div class="line">--<span class="attribute">font</span>-<span class="attribute">color</span>-active: none;</div><div class="line"></div><div class="line"><span class="comment">/* font color - light */</span></div><div class="line">--lt-<span class="attribute">font</span>-<span class="attribute">color</span>-regular: <span class="number">#1a1a1a</span>;</div><div class="line">--lt-<span class="attribute">font</span>-<span class="attribute">color</span>-success: none;</div><div class="line">--lt-<span class="attribute">font</span>-<span class="attribute">color</span>-danger: <span class="number">#f0163a</span>;</div><div class="line">--lt-<span class="attribute">font</span>-<span class="attribute">color</span>-warning: <span class="number">#f0163a</span>;</div><div class="line">--lt-<span class="attribute">font</span>-<span class="attribute">color</span>-info: <span class="number">#8c8c8c</span>;</div><div class="line">--lt-<span class="attribute">font</span>-<span class="attribute">color</span>-<span class="selector-tag">link</span>: <span class="number">#6fb900</span>;</div><div class="line">--lt-<span class="attribute">font</span>-<span class="attribute">color</span>-<span class="selector-tag">link</span>-hover: <span class="number">#c5c5c5</span>;</div><div class="line">--lt-<span class="attribute">font</span>-<span class="attribute">color</span>-active: none;</div></pre></td></tr></table></figure></p>
+<p>最終的にHTML （というか React と JSX）で作ったコンポーネントリストでは、実際に明るい背景と暗い背景の上にコンポーネントを置いて管理しました。これにより明るい背景では使えるけど、暗い背景ではそのまま使えないコンポーネントを一目で確認できるようになります。</p>
+<p><img src="/images/make-style-guide-easy/light-dark-component-list.png" alt="React JSX 明パターンと暗パターン"></p>
+<h2>空き箱を用意することで運用の難易度が下がった</h2>
+<p>空き箱を適切な抽象度を意識して用意することで、スタイルガイドの運用はうんと楽になりましした。以前は自分の中に、スタイルガイドは（ガイドというくらいなので）UI デザインを先導するものであるべきという意識がありました。先にスタイルガイドがあって、デザインがそのガイドに従って作られるべきと。でも、自分たちはある意味未知のものを創っているのに、それを先導するものを作る難易度はとても高いです。今回は作ってみたデザインカンプからガイドとなるパターンを見つけていく仕組みを緩く作ることで、スタイルガイドが以前よりもワークするようにできました。</p>
+<p>今回のプロジェクトでスタイルガイドに助けられた部分は大きいです。スタイルガイドがあることでデザイナーとの会話はしやすくなりましたし、今まで Photoshop や Sketch を通してしかできなかった部分のコミュニケーションを大きく補足してくれました。そしてエンジニアがデザインについてすこし深く考えるためのツールにもなったと思います。</p>
+<p>そして「こんな感じでスタイルガイド作っていきたいんだけど」って相談したら一晩で Sketch のテンプレート作ってくれた <a href="https://twitter.com/pekep" target="_blank" rel="external">@pekep</a> に感謝。</p>
+</div><div class="post__share"><a href="https://twitter.com/share" data-text="フロントエンド視点：デザイナーと協業して作るスタイルガイドの難易度を下げる" data-url="https://ygoto3.com/posts/make-style-guide-easy/" data-via="ygoto3_" class="twitter-share-button">Tweet</a><script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');
+</script><div data-href="https://ygoto3.com/posts/make-style-guide-easy/" data-layout="button" class="fb-share-button"></div></div></article><div class="container-paginator"><nav class="paginator pure-g"><div class="paginator__item pure-u-1-2"><a href="/archives/page/3/">previous</a></div><div class="paginator__item pure-u-1-2"><a href="/archives/page/5/">next</a></div></nav></div></div></div></div><footer class="pure-u-1"><div class="container-footer"><div class="footer"><div class="pure-g"><div class="pure-u"><img src="/images/ygoto3-avatar.jpg" width="80" height="80" class="footer__avatar"/></div><div class="pure-u-3-4"><a href="/"><h2 class="site-title">ygoto3.com</h2></a><p class="copyright footer__copyright">&copy; 2016&nbsp;Yusuke Goto<a href="https://twitter.com/ygoto3_" class="copyright__icon"><i class="fa fa-lg fa-twitter-square"></i></a><a href="/atom.xml" class="copyright__icon"><i class="fa fa-lg fa-rss-square"></i></a></p></div></div></div></div></footer><script src="/js/app.js"></script></body></html>

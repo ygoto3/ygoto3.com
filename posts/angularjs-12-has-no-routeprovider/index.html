@@ -1,0 +1,35 @@
+<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="description" content="Software engineer at CyberAgent."><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>$routeProviderがない - AngularJS 1.2.0-rc にアップデートする際の注意 | ygoto3.com</title><meta name="description" content="2013年11月1日現在、AngularJS最新のstable versionは「1.0.8」、「1.2.0」はRC扱いになっています。 通常はstableな「1.0.8」を使用すればいいのですが、たとえばngAnimateなどの機能は「1.2.0」から提供されているので、ngAnimateを使いたくてアップデートすることもあるかと思います。 1.2.0ではngRouteモジュールが本体から分離さ">
+<meta name="keywords" content="AngularJS">
+<meta property="og:type" content="article">
+<meta property="og:title" content="$routeProviderがない - AngularJS 1.2.0-rc にアップデートする際の注意">
+<meta property="og:url" content="https://ygoto3.com/posts/angularjs-12-has-no-routeprovider/index.html">
+<meta property="og:site_name" content="ygoto3.com">
+<meta property="og:description" content="2013年11月1日現在、AngularJS最新のstable versionは「1.0.8」、「1.2.0」はRC扱いになっています。 通常はstableな「1.0.8」を使用すればいいのですが、たとえばngAnimateなどの機能は「1.2.0」から提供されているので、ngAnimateを使いたくてアップデートすることもあるかと思います。 1.2.0ではngRouteモジュールが本体から分離さ">
+<meta property="og:updated_time" content="2019-02-13T03:11:50.328Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="$routeProviderがない - AngularJS 1.2.0-rc にアップデートする際の注意">
+<meta name="twitter:description" content="2013年11月1日現在、AngularJS最新のstable versionは「1.0.8」、「1.2.0」はRC扱いになっています。 通常はstableな「1.0.8」を使用すればいいのですが、たとえばngAnimateなどの機能は「1.2.0」から提供されているので、ngAnimateを使いたくてアップデートすることもあるかと思います。 1.2.0ではngRouteモジュールが本体から分離さ">
+<meta name="twitter:creator" content="@ygoto3_">
+<meta property="fb:app_id" content="777030512429159"><link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.css"><link rel="stylesheet" href="/css/index.css"></head><body class="container"><div id="fb-root"></div><script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.5&appId=777030512429159";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));
+</script><div class="container-introduction"><a href="/"><h1 class="site-title">ygoto3.com</h1></a></div><div class="container-posts"><article class="post"><header><h1 class="post__title">$routeProviderがない - AngularJS 1.2.0-rc にアップデートする際の注意</h1></header><div class="post__date">November 1, 2013</div><div class="post__entry"><p>2013年11月1日現在、AngularJS最新のstable versionは「1.0.8」、「1.2.0」はRC扱いになっています。</p>
+<p>通常はstableな「1.0.8」を使用すればいいのですが、たとえばngAnimateなどの機能は「1.2.0」から提供されているので、ngAnimateを使いたくてアップデートすることもあるかと思います。</p>
+<h3>1.2.0ではngRouteモジュールが本体から分離されている</h3>
+<p>SPAで開発する場合など$routeProviderサービスを使用してルーティング処理を行っていると思いますが、1.0.8では本体に組み込まれている$routeProviderが<strong>1.2.0ではngRouteモジュールのサービスとして分離されています</strong>。</p>
+<p>なので、$routeProviderを使用しているアプリで「1.2.0-rc」にアップデートした場合、下記のようなエラーがコンソールに表示されます。</p>
+<p><code>Uncaught Error: [$injector:modulerr] Failed to instantiate module angularApp due to: Error: [$injector:unpr] Unknown provider: $routeProvider</code></p>
+<h3>修正</h3>
+<p>対応方法は簡単で、ngRouteモジュールを提供する<strong>angular-route.js</strong>を別途インストールします。例えばBowerで</p>
+<p><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ bower install angular-route --save</div></pre></td></tr></table></figure></p>
+<p>でインストールした後、HTMLファイルでangular-routeを読み込み、</p>
+<p><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">"bower_components/angular-route/angular-route.js"</span>&gt;</span><span class="undefined"></span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></div></pre></td></tr></table></figure></p>
+<p>依存するモジュールとして<strong>ngRoute</strong>を追加します。</p>
+<p><figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">angular.module(<span class="string">'myApp'</span>, [<span class="string">'ngRoute'</span>])</div><div class="line">.config([<span class="string">'$routeProvider'</span>, <span class="function"><span class="keyword">function</span>(<span class="params">$routeProvider</span>) </span>&#123;</div><div class="line">  <span class="comment">// ...</span></div><div class="line">&#125;]);</div></pre></td></tr></table></figure></p>
+<p>これでエラーは消えて正常な動作に戻るはずです。</p>
+</div><div class="post__share"><a href="https://twitter.com/share" data-text="$routeProviderがない - AngularJS 1.2.0-rc にアップデートする際の注意" data-url="https://ygoto3.com/posts/angularjs-12-has-no-routeprovider/" data-via="ygoto3_" class="twitter-share-button">Tweet</a><script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');
+</script><div data-href="https://ygoto3.com/posts/angularjs-12-has-no-routeprovider/" data-layout="button" class="fb-share-button"></div></div></article></div><footer class="pure-u-1"><div class="container-footer"><div class="footer"><div class="pure-g"><div class="pure-u"><img src="/images/ygoto3-avatar.jpg" width="80" height="80" class="footer__avatar"/></div><div class="pure-u-3-4"><a href="/"><h2 class="site-title">ygoto3.com</h2></a><p class="copyright footer__copyright">&copy; 2016&nbsp;Yusuke Goto<a href="https://twitter.com/ygoto3_" class="copyright__icon"><i class="fa fa-lg fa-twitter-square"></i></a><a href="/atom.xml" class="copyright__icon"><i class="fa fa-lg fa-rss-square"></i></a></p></div></div></div></div></footer><script src="/js/app.js"></script></body></html>

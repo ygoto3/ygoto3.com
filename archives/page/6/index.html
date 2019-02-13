@@ -1,0 +1,189 @@
+<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="description" content="Software engineer at CyberAgent."><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>ygoto3.com</title><meta name="description" content="Software engineer at CyberAgent.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="ygoto3.com">
+<meta property="og:url" content="https://ygoto3.com/archives/page/6/index.html">
+<meta property="og:site_name" content="ygoto3.com">
+<meta property="og:description" content="Software engineer at CyberAgent.">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="ygoto3.com">
+<meta name="twitter:description" content="Software engineer at CyberAgent.">
+<meta name="twitter:creator" content="@ygoto3_">
+<meta property="fb:app_id" content="777030512429159"><link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.css"><link rel="stylesheet" href="/css/index.css"></head><body class="container"><div id="fb-root"></div><script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.5&appId=777030512429159";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));
+</script><div class="pure-g"><header class="pure-u-1"><div class="container-introduction"><div class="introduction"><a href="/"><h1 class="site-title">ygoto3.com</h1></a><p class="introduction__text">Software engineer at CyberAgent.<a href="https://twitter.com/ygoto3_" class="introduction__twitter"><i class="fa fa-lg fa-twitter-square"></i></a></p></div></div></header><div class="pure-u-1"><div class="container-posts"><article class="post"><header><a href="/posts/roles-of-angularjs-controller-service-directive-filter/" class="post__title"><h2>AngularJS の Controller / Service / Directive / Filter 役割のポイント</h2></a></header><div class="post__date">August 29, 2014</div><div class="post__entry"><p>会社内で AngularJS の Working Group を作り活動している中で、よく上がる質問の１つが AngularJS における Controller / Service / Directive / Filter に書く処理をどう分けたらいいのか、でした。</p>
+<p>本記事では、Controller / Service / Directive / Filter の役割のポイントを整理したいと思います。</p>
+<h3>基本ポイント</h3>
+<p>他の MVC デザインパターンと同様、ビジネスロジックとプレゼンテーションロジックを分離することが基本です。</p>
+<p>ビジネスロジックを Service が担当し、Controller でそれを紐付けてテンプレートに共有します。プレゼンテーションロジックは Directive と Filter が担当し、DOM 操作処理やデータ整形処理をテンプレートに共有します。</p>
+<h4>Controller</h4>
+<p>Controller ではビューで表示するデータとユーザーアクションに対するメソッドを定義します。</p>
+<p>AngularJS では <code>$scope</code> オブジェクトを介してデータやメソッドをテンプレートで共有することができます。Controller には、ビジネスロジックを <code>$scope</code> オブジェクトに書き込んでいき、テンプレートでは <code>$scope</code> オブジェクトで共有されたデータとメソッドを参照します。</p>
+<p>共有される <code>$scope</code> オブジェクトがカオスな状態になるのを避けるために、Controller では <code>$scope</code> オブジェクトを書き込み専用として、テンプレートでは読み取り専用として扱うと良いです。</p>
+<p>また、直接 DOM を参照することなどは行わなないようにします。DOM 操作処理が Controller に入ってしまうと、デザイン変更などでテンプレートの HTML に変更を行わなければいけない場合に、Controller も書き変える必要が出てくる可能性があります。</p>
+<p>そのため、DOM 操作処理は Controller 内では極力行わなず、Directive にその役目を渡しましょう。</p>
+<p>ビジネスロジックとプレゼンテーションロジックを Service、Directive、Filter に分離して Controller を簡潔に保つことができると理想的です。</p>
+<h4>Service</h4>
+<p>ビジネスロジック担当です。ビューに依存しない処理を記述します。</p>
+<p>また、各 Service はシングルトンとして存在するため、異なる Controller や Directive 間で共有するモデルとして使用できます。</p>
+<h4>Directive</h4>
+<p>HTML を拡張する機能です。前述の DOM 操作が必要になる場合を含み、プレゼンテーションロジックを記述します。</p>
+<p>自身で Controller を持ち、単一で完結するコンポーネントを作ることもできますし、属する scope で公開されているデータと振舞いをテンプレートに紐付ける役割を担います。</p>
+<h4>Filter</h4>
+<p>データを整形する処理を記述します。</p>
+<p>Directive と同様にプレゼンテーションロジックを記述しますが、Directive と違い、直接 Scope にアクセスすることはできません。モデルを変更することなく表示フォーマットのみを変更します。</p>
+<h3>サンプル</h3>
+<p>ここでは、フォームから ユーザーデータを追加する処理を例に説明します。</p>
+<p>この例では、<code>FormCtrl</code> という Controller、<code>noHyphen</code> という Directive、<code>User</code> という Service を組み合わせて実装しています。</p>
+<p>まずモジュールを宣言します。</p>
+<p><figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">var</span> app = angular.module(<span class="string">'app'</span>, []);</div></pre></td></tr></table></figure></p>
+<h4>テンプレート</h4>
+<p><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">body</span> <span class="attr">ng-app</span>=<span class="string">"app"</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">form</span> <span class="attr">name</span>=<span class="string">"registrationForm"</span> <span class="attr">ng-controller</span>=<span class="string">"FormCtrl"</span> <span class="attr">novalidate</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">input</span> <span class="attr">type</span>=<span class="string">"text"</span> <span class="attr">ng-model</span>=<span class="string">"user.nickname"</span> <span class="attr">required</span> <span class="attr">no-hyphen</span> /&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">button</span> <span class="attr">type</span>=<span class="string">"submit"</span> <span class="attr">name</span>=<span class="string">"nickname"</span> <span class="attr">ng-click</span>=<span class="string">"submit()"</span></span></div><div class="line"><span class="tag">  <span class="attr">ng-disabled</span>=<span class="string">"registrationForm.$invalid"</span>&gt;</span>送信<span class="tag">&lt;/<span class="name">button</span>&gt;</span></div><div class="line">  <span class="tag">&lt;/<span class="name">form</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">body</span>&gt;</span></div></pre></td></tr></table></figure></p>
+<p>このようなテンプレート用意した場合、各々の役割は以降のようになります。</p>
+<h4>Controller に書く実装</h4>
+<p><figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">app.controller(<span class="string">'FormCtrl'</span>, <span class="function"><span class="keyword">function</span> (<span class="params">$scope, $log, User</span>) </span>&#123;</div><div class="line">  $scope.submit = <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</div><div class="line">    User.addUser($scope.user)</div><div class="line">    .then(</div><div class="line">      <span class="function"><span class="keyword">function</span> (<span class="params">resource</span>) </span>&#123;</div><div class="line">        $log.log(resource);</div><div class="line">      &#125;,</div><div class="line">      <span class="function"><span class="keyword">function</span> (<span class="params">err</span>) </span>&#123;</div><div class="line">        $log.warn(err);</div><div class="line">      &#125;</div><div class="line">    );</div><div class="line">  &#125;;</div><div class="line">&#125;);</div></pre></td></tr></table></figure></p>
+<p>ここでのポイントは <code>$scope</code> オブジェクトの設定だけを記述している点です。DOM にイベントハンドラを紐付ける <code>$('button').on('click', function () { ... })</code> などの処理はビルトインの Directive である <code>ngClick</code> に任せてあります。</p>
+<p>また、バリデーション機能は、特定の DOM の値を取得する必要があるため、Controller 内には記述しません。後述する <code>noHyphen</code> という Directive を実装して機能を実現します。</p>
+<p>このフォームは送信ボタンを押された時に Ajax 処理も実行しますが、その処理も後述する <code>User</code> という Service に実装を切り分けています。</p>
+<h4>Directive に書く実装</h4>
+<p><figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">app.directive(<span class="string">'noHyphen'</span>, <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</div><div class="line">  <span class="keyword">return</span> &#123;</div><div class="line">    <span class="built_in">require</span>: <span class="string">'ngModel'</span>,</div><div class="line">    link: <span class="function"><span class="keyword">function</span> (<span class="params">iScope, iElem, iAttr, ngModelCtrl</span>) </span>&#123;</div><div class="line">      ngModelCtrl.$parsers.push(<span class="function"><span class="keyword">function</span> (<span class="params">viewVal</span>) </span>&#123;</div><div class="line">        <span class="keyword">var</span> _isValid = <span class="literal">true</span>;</div><div class="line"></div><div class="line">        <span class="keyword">if</span> (~viewVal.indexOf(<span class="string">'-'</span>)) &#123;</div><div class="line">          _isValid = <span class="literal">false</span>;</div><div class="line">        &#125;</div><div class="line"></div><div class="line">        ngModelCtrl.$setValidity(<span class="string">'noHyphen'</span>, _isValid)</div><div class="line">      &#125;);</div><div class="line">    &#125;</div><div class="line">  &#125;;</div><div class="line">&#125;);</div></pre></td></tr></table></figure></p>
+<p>ここでのポイントは、<code>ngModel</code> を介して DOM 操作をしている点です。Controller で必要だった DOM にイベントハンドラを紐付ける処理は Directive に記述します。</p>
+<p>処理した結果を <code>ngModel</code> ディレクティブを介して <code>FormCtrl</code> の <code>$scope</code> に渡しています。</p>
+<h4>Service に書く実装</h4>
+<p>今回は、<code>factory</code> メソッドを使用します。</p>
+<p><figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div></pre></td><td class="code"><pre><div class="line">app.factory(<span class="string">'User'</span>, <span class="function"><span class="keyword">function</span> (<span class="params">$http</span>) </span>&#123;</div><div class="line">  <span class="keyword">var</span> _onSuccess = <span class="function"><span class="keyword">function</span> (<span class="params">res</span>) </span>&#123;</div><div class="line">        <span class="keyword">return</span> res.data;</div><div class="line">      &#125;,</div><div class="line">      _onError = <span class="function"><span class="keyword">function</span> (<span class="params">res</span>) </span>&#123;</div><div class="line">        <span class="keyword">return</span> $q.reject(<span class="string">'an error occured.'</span>);</div><div class="line">      &#125;,</div><div class="line">      _addUser = <span class="function"><span class="keyword">function</span> (<span class="params">user</span>) </span>&#123;</div><div class="line">        <span class="keyword">var</span> request = $http(&#123;</div><div class="line">          method: <span class="string">'post'</span>,</div><div class="line">          url: <span class="string">'/api/something'</span>,</div><div class="line">          params: &#123;</div><div class="line">            action: <span class="string">'add'</span></div><div class="line">          &#125;,</div><div class="line">          data: &#123;</div><div class="line">            nickname: user.nickname</div><div class="line">          &#125;</div><div class="line">        &#125;);</div><div class="line">        <span class="keyword">return</span> request.then(_onSuccess, _onError);</div><div class="line">      &#125;;</div><div class="line"></div><div class="line">   <span class="keyword">return</span> &#123;</div><div class="line">     addUser: _addUser</div><div class="line">   &#125;;</div><div class="line">&#125;);</div></pre></td></tr></table></figure></p>
+<p>ここでのポイントは、ビューに依存しない処理のみを記述している点です。</p>
+<p>ここでは、新規ユーザーデータの送信に使われる Ajax 処理を実装しているので、<code>FormCtrl</code> はこの <code>User</code> Service をインジェクトすることで自身の <code>$scope</code> オブジェクトに持っているデータを送信することができます。</p>
+<p>特有の概念が多いため AngularJS での役割の分担は分かりづらいですが、自分は上記のように処理を分けるようにしています。</p>
+</div><div class="post__share"><a href="https://twitter.com/share" data-text="AngularJS の Controller / Service / Directive / Filter 役割のポイント" data-url="https://ygoto3.com/posts/roles-of-angularjs-controller-service-directive-filter/" data-via="ygoto3_" class="twitter-share-button">Tweet</a><script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');
+</script><div data-href="https://ygoto3.com/posts/roles-of-angularjs-controller-service-directive-filter/" data-layout="button" class="fb-share-button"></div></div></article><article class="post"><header><a href="/posts/2012-jquery-early-2013-backbone-late-2013-angularjs/" class="post__title"><h2>2012 jQuery→Early 2013 Backbone→Late 2013 AngularJSな自分がハマった10のこと</h2></a></header><div class="post__date">December 22, 2013</div><div class="post__entry"><p>こちらは<a href="http://www.adventar.org/calendars/62" title="Frontrend Advent Calendar 2013" target="_blank" rel="external">Frontrend Advent Calendar 2013</a> 22日目の記事です。</p>
+<p>本記事は、2012年までjQueryだけで開発していたフロントエンドエンジニアの自分が、<a href="http://frontrend.github.io/" title="Frontrend" target="_blank" rel="external">Frontrend</a>な方々に影響を受けたのをきっかけに、とあるコミュニティ系WebサービスでAngularJSを導入するまでの過程で影響された記事やイベントや人を時系列で紹介すると共に導入後AngularJSの開発でハマった10のことを紹介します。</p>
+<h3>2012.07：Anatomy of Backbone.jsで学ぶ</h3>
+<p><a href="http://angularjs.org/" title="AngularJS" target="_blank" rel="external">AngularJS</a>と言えば、MVC的なアーキテクチャをJavaScript開発に取り入れるためのフレームワークで現在は業務でも使用させていただいています。</p>
+<p>しかし、振り返ってみると、2012年はMVなんちゃらなフレームワーク等には、全く無縁の生活を送っていました。</p>
+<p>そんな2012年の7月頃に、Frontrendの<a href="https://twitter.com/cssradar" title="Yuya Saito" target="_blank" rel="external">Yuya Saito</a>さんに<a href="https://www.codeschool.com/" title="Code School" target="_blank" rel="external">Code School</a>の<a href="https://www.codeschool.com/courses/anatomy-of-backbonejs" title="Anatomy of Backbone.js" target="_blank" rel="external">Anatomy of Backbone.js</a>を紹介していただいて、<a href="http://backbonejs.org/" title="Backbone.js" target="_blank" rel="external">Backbone</a>をはじめとするJS開発におけるMVC的な発想を知ります。</p>
+<p>ご存知の方も多いと思いますが、<a href="https://www.codeschool.com/" title="Code School" target="_blank" rel="external">Code School</a>はステップごとに用意されている講義形式の動画で学び、そのまま出題される課題をブラウザ上のエディタでコードを書いて解答して、実践的にプログラミングを学ぶことができるサービスです。</p>
+<p><a href="https://www.codeschool.com/courses/anatomy-of-backbonejs" title="Anatomy of Backbone.js" target="_blank" rel="external">Anatomy of Backbone.js</a>を受講した印象としては、とても初心者が学習しやすいチュートリアルです。JSライブラリと言えば<a href="http://jquery.com/" title="jQuery" target="_blank" rel="external">jQuery</a>しか使ったことがなかった自分はここでBackboneの基本の基本を学べたと思います。</p>
+<h3>2013.02：Frontrend Vol.4でBackbone導入決意</h3>
+<p>基本のチュートリアルをこなしたとは言え、実際のプロジェクト(リリース済)で使うことに敷居の高さとリスクを感じ、なかなか導入することもできないまま2013年になってしまいました。</p>
+<p>しかし、2月9日に開催された<a href="http://frontrend.github.io/events/04/r" title="Frontrend Vol.4" target="_blank" rel="external">Frontrend Vol.4</a>での<a href="http://aho.mu/" title="ahomu" target="_blank" rel="external">ahomu</a>さんセッション「<a href="http://vimeo.com/album/2260782/video/59558632" title="jQuery to Backbone – アーキテクチャを意識したJavaScript入門" target="_blank" rel="external">jQuery to Backbone – アーキテクチャを意識したJavaScript入門</a>」で、まさに「自分みたいにjQueryくらいしかライブラリ触ったことない人でもBackboneとか使えるかもー」と思い始めます。セッションの内容を参考にさっそく自分がフロントエンドを担当しているWebサービスでBackboneの導入を始めました。</p>
+<p>このセッションは、当時のJS開発におけるjQueryが解決しない問題とBackboneを導入することで得られるメリットが分かりやすく説明されている上に、jQueryベースで記述されたコードをBackboneの構造に徐々に移していく具体的なコーディング手順まで紹介されています。自分はまさにその手順に従って、プロジェクトにBackboneを導入できたように思います。</p>
+<h3>2013.09：Backbone Is Not EnoughでEmberJSとAngularJSが気になる</h3>
+<p>Backboneを使い始めて半年くらい経ち、自分が担当しているサービスでは巡るめくアップデートとプロモーション施策の実装をしていかなければいけませんでした。そしてフロントエンドエンジニアが自分だけ、という状況だったこともあり「何か劇的に開発を高速化できる方法はないかな」と日々模索していました。</p>
+<p>そして、<a href="http://www.shinetech.com/" title="Shine Technologies" target="_blank" rel="external">Shine Technologies</a>のブログ記事「<a href="http://blog.shinetech.com/2013/09/06/backbone-is-not-enough/" title="Backbone Is Not Enough" target="_blank" rel="external">Backbone Is Not Enough</a>」を読み、AngularJSに興味を持ち始めます。</p>
+<p>記事では、Backboneでの大規模なSPA開発において、ネストされるViewをうまく構成する難しさ、Viewをテストする難しさ、メモリ管理の難しさ、容易に遅くなってしまうレンダリングへの対策やデータバインディングの重要さなどに関して<a href="http://emberjs.com/" title="EmberJS" target="_blank" rel="external">EmberJS</a>やAngularJSと比較して書かれていますが、中でも「Backboneと比較したEmberJSとAngularJSのコード記述量がかなり少ない」という1点に惹かれて、EmberJSとAngularJSが気になり始めます。</p>
+<h3>2013.10：A comparison of the two-way binding in AngularJS, EmberJS and KnockoutJSでAngularJSが一番良いような気がしてくる</h3>
+<p>EmberJSとAngularJSが気になり始めましたが、これらのフレームワークはそれぞれ何が違うのかは正直よく分からないでいました。Backbone単体では自分でこつこつ設定するデータバインディングを簡単に設定できる点に関しては、EmberJSもAngularJSも同じです。</p>
+<p>その疑問に関しては、2013年10月に公開された<a href="http://2013.jsconf.eu/" title="JSConf EU 2013" target="_blank" rel="external">JSConf EU 2013</a>（9月開催）のMarius Gundersen氏セッションの動画「<a href="http://www.youtube.com/watch?v=mVjpwia1YN4" title="A comparison of the two-way binding in AngularJS, EmberJS and KnockoutJS" target="_blank" rel="external">A comparison of the two-way binding in AngularJS, EmberJS and KnockoutJS</a>」で解決されます。</p>
+<p>このセッションでは、AngularJS、EmberJS、<a href="http://knockoutjs.com/" title="KnockoutJS" target="_blank" rel="external">KnockoutJS</a>の双方向データバインディングにおける挙動の違いが分かりやすくまとめられています。</p>
+<p>このセッションにおいてAngularJSは、Dirty Checkingという仕組みと非同期でデータをバインドをしているため、</p>
+<ul>
+<li>リストの単純なレンダリングに関しては速い</li>
+<li>Modelが複雑で巨大になってくるとレンダリングが遅い</li>
+<li>コンピューティング処理が挟まれるプロパティに関しては重くなる</li>
+</ul>
+<p>などの特徴が説明されています。</p>
+<p>担当サービスにおいて、Modelはそこまで複雑かつ巨大にならないと思った点と単純なレンダリングの速さが気に入り、AngularJSの導入を決めました。</p>
+<h3>2013.10：A Better Way to Learn AngularJSで学ぶ</h3>
+<p>導入を決めたら、次はAngularJSについて学習しなければいけません。</p>
+<p>「<a href="https://www.codeschool.com/courses/anatomy-of-backbonejs" title="Anatomy of Backbone.js" target="_blank" rel="external">Anatomy of Backbone.js</a>」のような効率が良い（そしてできれば無料の）ラーニングリソースを探していたら（残念ながら、<a href="https://www.codeschool.com/" title="Code School" target="_blank" rel="external">Code School</a>にAngularJSのコースはありませんでした。）、「<a href="http://www.thinkster.io/pick/GtaQ0oMGIl/" title="A Better Way to Learn AngularJS" target="_blank" rel="external">A Better Way to Learn AngularJS</a>」というラーニングリソースを見つけました。</p>
+<p><a href="https://www.codeschool.com/" title="Code School" target="_blank" rel="external">Code School</a>のようにコーディングで課題を問いていくリッチな機能は無いですが、初心者にも分かりやすく説明されたAngularJSのチュートリアルを動画で見ることができます。無料で学べるのですが、これを一通りこなすだけでAngularJSの基本的な使い方に関しては網羅できるように思います。</p>
+<h3>2013.10：AngularJSで開発を始めていろいろとハマる</h3>
+<p>もちろん基本的な使い方しか学んでいない自分は、AngularJSでサービスの開発を始めると、いろんなところでハマりました。Backboneを利用していた時と比べ、確かにコード記述量は減りましたが、AngularJSについて調べている時間は増えました。</p>
+<p>そんなわけで「<a href="http://blog.shinetech.com/2013/09/06/backbone-is-not-enough/" title="Backbone Is Not Enough" target="_blank" rel="external">Backbone Is Not Enough</a>」に載っていたAngularJSの<a href="http://shinetechblog.files.wordpress.com/2013/09/learning_curves.png" target="_blank" rel="external">ラーニングカーブ</a>をしみじみ実感しましたが、同時にノウハウが溜まった後は劇的に楽になるはず、という期待でいっぱいでした。</p>
+<h4>AngularJSで開発を始めてハマった10のこと</h4>
+<p>本記事のタイトルにある通り、ここからはAngularJSでの開発で最初の頃に自分がハマった点を回避策とともにリストしていきたいと思います。</p>
+<h5>1. JSファイルをminifyしたら動かなくなった</h5>
+<p>AngularJSでは、Controllerの書き方にパターンがいくつか存在しますが、そのパターンのうちminifyするとJSが正しく動作しなくなるものがあります。</p>
+<p>AngularJSにはDI (Dependency Injection)と呼ばれる仕組みがあります。Controllerで使用するserviceを指定する際に、functionの引数に指定された変数名から自動的に必要なserviceを決定できるすごい機能を持っているために、起こってしまうのがこの問題です。</p>
+<p>回避策は2点。</p>
+<ul>
+<li>引数にわたすserviceの名前を文字列で明示する</li>
+<li>ngminを使用する</li>
+</ul>
+<p>1点目の回避策は、引数にわたすserviceの名前を文字列で明示することです。</p>
+<p>minifyすると動かない書き方（functionの引数だけでserviceを指定）</p>
+<p><figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">angular.module(<span class="string">'myApp'</span>, [])</div><div class="line">  .controller(<span class="string">'MyCtrl'</span>, <span class="function"><span class="keyword">function</span> (<span class="params">$scope, $http</span>) </span>&#123;</div><div class="line">    <span class="comment">// ...</span></div><div class="line">  &#125;);</div></pre></td></tr></table></figure></p>
+<p>minifyしても動く書き方（functionの引数の前に文字列でserviceを指定）</p>
+<p><figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">angular.module(<span class="string">'myApp'</span>, [])</div><div class="line">  .controller(<span class="string">'MyCtrl'</span>, [<span class="string">'$scope'</span>, <span class="string">'$http'</span>, <span class="function"><span class="keyword">function</span> (<span class="params">$scope, $http</span>) </span>&#123;</div><div class="line">    <span class="comment">// ...</span></div><div class="line">  &#125;]);</div></pre></td></tr></table></figure></p>
+<p>2点目の回避策は、使用するpre-minifierを<a href="https://github.com/btford/ngmin" title="ngmin" target="_blank" rel="external">ngmin</a>にすることです。</p>
+<p>こちらだと動かない方の書き方をしても、ngminが動く方の書き方に変えてminifyしてくれます。これでキーの打数は減り、楽して開発できるでしょう。</p>
+<h5>2. RequireJSなどで遅延ロードするとAngularJSが正しく動かない</h5>
+<p>Backboneを使っているときは、モジュールごとに処理を分けてRequireJSで遅延ロードさせたりしていましたが、AngularJSで同様のことをしようと思うとモジュールのロードが完了する前にAngularの起動が行われて、意図した挙動をしなくなることがあります。</p>
+<p>回避策は、手動で起動することです。</p>
+<p><figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="built_in">require</span>([<span class="string">'require'</span>, <span class="string">'exports'</span>, <span class="string">'app'</span>], <span class="function"><span class="keyword">function</span> (<span class="params">require, angular</span>) </span>&#123;</div><div class="line">  <span class="comment">// 起動前のいろんな処理...</span></div><div class="line"></div><div class="line">  <span class="comment">// 手動で起動</span></div><div class="line">  angular.bootstrap(<span class="built_in">document</span>, [<span class="string">'myApp'</span>]);</div><div class="line">&#125;);</div></pre></td></tr></table></figure></p>
+<h5>3. AngularJS起動前だとng-hideなどで隠れるはずの要素が一瞬表示されてしまう</h5>
+<p>SPAで作っている場合には問題ないかもしれませんが、そうでない場合、先述した手動での初期化などを行うとAngularJSの起動が遅くなり、ページロード時にngHideディレクティブなどを指定しているDOMが一瞬表示されてしまうことがあります。</p>
+<p><a href="https://github.com/angular/angular.js/blob/master/css/angular.css" title="angular.css" target="_blank" rel="external">angular.css</a>を読み込んでおき、対象の要素のclass属性に<strong>ng-hide</strong>を足しておくことで回避できます。</p>
+<p>ngHideなどの処理は、内容的には**display:none;**を適用するために、<strong>ng-hide</strong>というクラスを要素に付けているだけです。</p>
+<p><figure class="highlight css"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="selector-class">.ng-hide</span> &#123;</div><div class="line">  <span class="attribute">display</span>: none <span class="meta">!important</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p><a href="https://github.com/angular/angular.js/blob/master/css/angular.css" title="angular.css" target="_blank" rel="external">angular.css</a>を読み込まなくても、上記のようなcssが入っていれば大丈夫です。</p>
+<h5>4. AngularJS起動前にが一瞬表示されてしまう</h5>
+<p>上記と同様に、AngularJS起動前の評価されていないexpressionも生のテキストとしてページロード時に一瞬表示されてしまいます。</p>
+<p><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">p</span>&gt;</span>&#123;&#123;comment&#125;&#125;<span class="tag">&lt;/<span class="name">p</span>&gt;</span></div></pre></td></tr></table></figure></p>
+<p>このような場合は、</p>
+<p><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">p</span> <span class="attr">ng-bind</span>=<span class="string">"comment"</span>&gt;</span><span class="tag">&lt;/<span class="name">p</span>&gt;</span></div></pre></td></tr></table></figure></p>
+<p>で回避することができます。
+もしくは、</p>
+<p><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">p</span> <span class="attr">ng-cloak</span>&gt;</span><span class="tag">&lt;/<span class="name">p</span>&gt;</span></div></pre></td></tr></table></figure></p>
+<p>でも可能ですが、ngCloakを使用する場合はngHide同様<a href="https://github.com/angular/angular.js/blob/master/css/angular.css" title="angular.css" target="_blank" rel="external">angular.css</a>を読み込んでおく必要があります。</p>
+<p>この問題を回避するという用途的には、ngCloakを使う方が正しいようです。</p>
+<h5>5. textarea要素にデフォルト値が設定できない</h5>
+<p>textarea要素にデフォルト値を設定したいと思い、</p>
+<p><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">textarea</span> <span class="attr">ng-model</span>=<span class="string">"comment"</span>&gt;</span>コメント<span class="tag">&lt;/<span class="name">textarea</span>&gt;</span></div></pre></td></tr></table></figure></p>
+<p>上のように設定してもテキストエリア内にもcomment Modelにも反映されません。</p>
+<p>回避策は、ng-initで明示的にcomment Modelをそのデフォルト値で初期化することです。</p>
+<p><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">textarea</span> <span class="attr">ng-init</span>=<span class="string">"comment = ‘コメント’"</span> <span class="attr">ng-model</span>=<span class="string">"comment"</span>&gt;</span><span class="tag">&lt;/<span class="name">textarea</span>&gt;</span></div></pre></td></tr></table></figure></p>
+<h5>6. 表示テキストが2重エスケープされる</h5>
+<p>AngularJSでHTMLにバインドすると自動的にエスケープがかかってしまいます。サーバサイドでエスケープ処理を施している場合は、場合によっては2重エスケープ状態が発生してしまいます。</p>
+<p>そんなときは、ngSanitizeをインストールして、</p>
+<p><figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">angular.module(<span class="string">'myApp'</span>, [<span class="string">'ngSanitize'</span>]);</div></pre></td></tr></table></figure></p>
+<p>DOMには</p>
+<p><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">span</span>&gt;</span>&#123;&#123;item.content&#125;&#125;<span class="tag">&lt;/<span class="name">span</span>&gt;</span></div></pre></td></tr></table></figure></p>
+<p>と書く代わりに</p>
+<p><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">span</span> <span class="attr">ng-bind-html</span>=<span class="string">"item.content"</span>&gt;</span><span class="tag">&lt;/<span class="name">span</span>&gt;</span></div></pre></td></tr></table></figure></p>
+<p>のようにしてエスケープ処理をしないようにできます。</p>
+<h5>7. Directiveの命名規則がややこしい</h5>
+<p>ここからは、AngularJSで一番素敵な機能だと思っているDirectiveについてのネタが続きます。</p>
+<p><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">x-switch</span>&gt;</span><span class="tag">&lt;/<span class="name">x-switch</span>&gt;</span></div></pre></td></tr></table></figure></p>
+<p>このようなElement DirectiveをJS側で定義したいとき、</p>
+<p><figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">angular.module(<span class="string">'myApp'</span>, [])</div><div class="line">  .directive(<span class="string">'xSwitch'</span>, <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</div><div class="line">    <span class="comment">// ...</span></div><div class="line">  &#125;);</div></pre></td></tr></table></figure></p>
+<p>のように、ハイフンつなぎ（x-switch）→キャメルケース（xSwitch）とする必要があります。</p>
+<h5>8. カスタムDirectiveの内側のコンテンツが消える</h5>
+<p>当然と言えば当然なのですが、テンプレートを指定したDirective DOMの内側にあらかじめコンテンツを入れておいてもテンプレートに置き変えられてしまいます。最初はこれに気づきませんでした。</p>
+<p>Directiveの内側に入れたコンテンツをテンプレート内の特定の場所で利用したい場合は、JS側のDirective定義でtranscludeをtrueに設定し、template側のコンテンツを利用したい要素にng-transclude属性を設定する。</p>
+<p><figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">angular.module(<span class="string">'myApp'</span>, [])</div><div class="line">  .directive(<span class="string">'someDirective'</span>, <span class="function"><span class="keyword">function</span> (<span class="params"></span>) </span>&#123;</div><div class="line">    <span class="keyword">return</span> &#123;</div><div class="line">      transclude: <span class="literal">true</span>,</div><div class="line">      template: <span class="string">'&lt;div class="well"&gt;&lt;p ng-transclude&gt;&lt;/p&gt;&lt;/div&gt;'</span>,</div><div class="line">      link: <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</div><div class="line">        <span class="comment">// …</span></div><div class="line">      &#125;</div><div class="line">    &#125;;</div><div class="line">  &#125;)</div></pre></td></tr></table></figure></p>
+<h5>9. カスタムDirectiveをたくさん作っていたらtemplate用HTMLファイルのリクエストでいっぱいになる</h5>
+<p>カスタムDirectiveはとても便利で、HTMLを綺麗にしておけるし、処理も独立させられるのでついついたくさん作ってしまいます。そのときに使用するテンプレートHTMLを外部においてtemplateUrlで読み込ませると、そのテンプレートの数分だけリクエストが別途走ってしまいます。</p>
+<p>回避策は、外部テンプレートHTMLをtemplateCacheを使用してJSにキャッシュしてくれる<a href="https://github.com/ericclemmons/grunt-angular-templates" title="grunt-angular-templates" target="_blank" rel="external">grunt-angular-templates</a>を使用することです。</p>
+<p>こちらに関しては、<a href="http://www.ygoto3.com/?p=8" title="grunt-angular-templatesを使ってみた" target="_blank" rel="external">別記事</a>参照。</p>
+<h5>10. AngularJS Batarangの存在を知るのが遅かった</h5>
+<p>これは、ハマったことでも何でもないですが、AngularJSのデバッグをする際にDev ToolsとDOM自体にプロパティ表示用のコードを書いたりしていました。</p>
+<p>AngularJSのデバッグ用Chrome Extensionに「<a href="https://github.com/angular/angularjs-batarang" title="Angular Batarang" target="_blank" rel="external">Angular Batarang</a>」というものがあります。これの存在をもっと早く知っていたらデバッグがもっと楽だっただろうと思います。</p>
+<p>BackboneにもFirebug Extensionの「<a href="https://addons.mozilla.org/en-US/firefox/addon/Backbone-Eye/" title="Backbone-Eye" target="_blank" rel="external">Backbone-Eye</a>」などがありますし、やはり専用のデバッグツールがあると開発も快適です。</p>
+<h3>2013.10：ブログを始める（余談）</h3>
+<p>開発にハマっては調べハマっては調べしている日々の中、Frontrendの<a href="http://inkdesign.jp/" title="Hiroki Tani" target="_blank" rel="external">Hiroki Tani</a>さんに何気なく「ブログとか書いてみたらどうですか」と言われたのをきっかけに、どうせならAngularJSで調べたことでも書いてみようと思い、このブログを始めました。あまり継続して書けていないので、来年はもっと頑張ろうと思います。</p>
+<h3>終わりに</h3>
+<p><a href="http://www.adventar.org/calendars/62" title="Frontrend Advent Calendar 2013" target="_blank" rel="external">Frontrend Advent Calendar 2013</a>という場を借りて、とても個人的な振り返りをさせていただきました。今日この記事を書けるのも、先に書いた通り<a href="http://frontrend.github.io/" title="Frontrend" target="_blank" rel="external">Frontrend</a>の方々にいただいたきっかけが大きく影響しています。</p>
+<p>明日は、<a href="http://blog.wnotes.net/blog/article/webrtc-beginning" title="ysugimoto" target="_blank" rel="external">ysugimoto</a> さんです。</p>
+</div><div class="post__share"><a href="https://twitter.com/share" data-text="2012 jQuery→Early 2013 Backbone→Late 2013 AngularJSな自分がハマった10のこと" data-url="https://ygoto3.com/posts/2012-jquery-early-2013-backbone-late-2013-angularjs/" data-via="ygoto3_" class="twitter-share-button">Tweet</a><script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');
+</script><div data-href="https://ygoto3.com/posts/2012-jquery-early-2013-backbone-late-2013-angularjs/" data-layout="button" class="fb-share-button"></div></div></article><article class="post"><header><a href="/posts/angularjs-12-has-no-routeprovider/" class="post__title"><h2>$routeProviderがない - AngularJS 1.2.0-rc にアップデートする際の注意</h2></a></header><div class="post__date">November 1, 2013</div><div class="post__entry"><p>2013年11月1日現在、AngularJS最新のstable versionは「1.0.8」、「1.2.0」はRC扱いになっています。</p>
+<p>通常はstableな「1.0.8」を使用すればいいのですが、たとえばngAnimateなどの機能は「1.2.0」から提供されているので、ngAnimateを使いたくてアップデートすることもあるかと思います。</p>
+<h3>1.2.0ではngRouteモジュールが本体から分離されている</h3>
+<p>SPAで開発する場合など$routeProviderサービスを使用してルーティング処理を行っていると思いますが、1.0.8では本体に組み込まれている$routeProviderが<strong>1.2.0ではngRouteモジュールのサービスとして分離されています</strong>。</p>
+<p>なので、$routeProviderを使用しているアプリで「1.2.0-rc」にアップデートした場合、下記のようなエラーがコンソールに表示されます。</p>
+<p><code>Uncaught Error: [$injector:modulerr] Failed to instantiate module angularApp due to: Error: [$injector:unpr] Unknown provider: $routeProvider</code></p>
+<h3>修正</h3>
+<p>対応方法は簡単で、ngRouteモジュールを提供する<strong>angular-route.js</strong>を別途インストールします。例えばBowerで</p>
+<p><figure class="highlight bash"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">$ bower install angular-route --save</div></pre></td></tr></table></figure></p>
+<p>でインストールした後、HTMLファイルでangular-routeを読み込み、</p>
+<p><figure class="highlight html"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">script</span> <span class="attr">src</span>=<span class="string">"bower_components/angular-route/angular-route.js"</span>&gt;</span><span class="undefined"></span><span class="tag">&lt;/<span class="name">script</span>&gt;</span></div></pre></td></tr></table></figure></p>
+<p>依存するモジュールとして<strong>ngRoute</strong>を追加します。</p>
+<p><figure class="highlight javascript"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">angular.module(<span class="string">'myApp'</span>, [<span class="string">'ngRoute'</span>])</div><div class="line">.config([<span class="string">'$routeProvider'</span>, <span class="function"><span class="keyword">function</span>(<span class="params">$routeProvider</span>) </span>&#123;</div><div class="line">  <span class="comment">// ...</span></div><div class="line">&#125;]);</div></pre></td></tr></table></figure></p>
+<p>これでエラーは消えて正常な動作に戻るはずです。</p>
+</div><div class="post__share"><a href="https://twitter.com/share" data-text="$routeProviderがない - AngularJS 1.2.0-rc にアップデートする際の注意" data-url="https://ygoto3.com/posts/angularjs-12-has-no-routeprovider/" data-via="ygoto3_" class="twitter-share-button">Tweet</a><script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');
+</script><div data-href="https://ygoto3.com/posts/angularjs-12-has-no-routeprovider/" data-layout="button" class="fb-share-button"></div></div></article><div class="container-paginator"><nav class="paginator pure-g"><div class="paginator__item pure-u-1-2"><a href="/archives/page/5/">previous</a></div><div class="paginator__item pure-u-1-2"><a href="/archives/page/7/">next</a></div></nav></div></div></div></div><footer class="pure-u-1"><div class="container-footer"><div class="footer"><div class="pure-g"><div class="pure-u"><img src="/images/ygoto3-avatar.jpg" width="80" height="80" class="footer__avatar"/></div><div class="pure-u-3-4"><a href="/"><h2 class="site-title">ygoto3.com</h2></a><p class="copyright footer__copyright">&copy; 2016&nbsp;Yusuke Goto<a href="https://twitter.com/ygoto3_" class="copyright__icon"><i class="fa fa-lg fa-twitter-square"></i></a><a href="/atom.xml" class="copyright__icon"><i class="fa fa-lg fa-rss-square"></i></a></p></div></div></div></div></footer><script src="/js/app.js"></script></body></html>

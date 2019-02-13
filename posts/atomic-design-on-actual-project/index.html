@@ -1,0 +1,76 @@
+<!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="description" content="Software engineer at CyberAgent."><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Atomic Design を実案件に導入 - UI コンポーネントの粒度を明確化した結果と副産物 | ygoto3.com</title><meta name="description" content="ここ半年開発していた動画サービスをベータ版ながらリリースしました（正式リリースは 4 月）。そのサービスの開発において、以前投稿した Atomic Design を採用しました。本記事では Atomic Design を実案件に導入した結果と感想を書いていきます。 Atomic Design の基本的な概念に関して知りたい方は Brad Frost 氏の原文、もしくは私の以前の記事↓を参照できます">
+<meta name="keywords" content="Atomic Design">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Atomic Design を実案件に導入 - UI コンポーネントの粒度を明確化した結果と副産物">
+<meta property="og:url" content="https://ygoto3.com/posts/atomic-design-on-actual-project/index.html">
+<meta property="og:site_name" content="ygoto3.com">
+<meta property="og:description" content="ここ半年開発していた動画サービスをベータ版ながらリリースしました（正式リリースは 4 月）。そのサービスの開発において、以前投稿した Atomic Design を採用しました。本記事では Atomic Design を実案件に導入した結果と感想を書いていきます。 Atomic Design の基本的な概念に関して知りたい方は Brad Frost 氏の原文、もしくは私の以前の記事↓を参照できます">
+<meta property="og:image" content="https://ygoto3.com/images/atomic-design-on-actual-project/component-list.png">
+<meta property="og:updated_time" content="2019-02-13T03:11:50.328Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Atomic Design を実案件に導入 - UI コンポーネントの粒度を明確化した結果と副産物">
+<meta name="twitter:description" content="ここ半年開発していた動画サービスをベータ版ながらリリースしました（正式リリースは 4 月）。そのサービスの開発において、以前投稿した Atomic Design を採用しました。本記事では Atomic Design を実案件に導入した結果と感想を書いていきます。 Atomic Design の基本的な概念に関して知りたい方は Brad Frost 氏の原文、もしくは私の以前の記事↓を参照できます">
+<meta name="twitter:image" content="https://ygoto3.com/images/atomic-design-on-actual-project/component-list.png">
+<meta name="twitter:creator" content="@ygoto3_">
+<meta property="fb:app_id" content="777030512429159"><link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/font-awesome/4.3.0/css/font-awesome.css"><link rel="stylesheet" href="/css/index.css"></head><body class="container"><div id="fb-root"></div><script>(function(d, s, id) {
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) return;
+  js = d.createElement(s); js.id = id;
+  js.src = "//connect.facebook.net/en_US/sdk.js#xfbml=1&version=v2.5&appId=777030512429159";
+  fjs.parentNode.insertBefore(js, fjs);
+}(document, 'script', 'facebook-jssdk'));
+</script><div class="container-introduction"><a href="/"><h1 class="site-title">ygoto3.com</h1></a></div><div class="container-posts"><article class="post"><header><h1 class="post__title">Atomic Design を実案件に導入 - UI コンポーネントの粒度を明確化した結果と副産物</h1></header><div class="post__date">March 16, 2016</div><div class="post__entry"><p>ここ半年開発していた<a href="https://abema.tv/" target="_blank" rel="external">動画サービス</a>をベータ版ながらリリースしました（正式リリースは 4 月）。そのサービスの開発において、以前投稿した <a href="http://bradfrost.com/blog/post/atomic-web-design/" target="_blank" rel="external">Atomic Design</a> を採用しました。本記事では Atomic Design を実案件に導入した結果と感想を書いていきます。</p>
+<p>Atomic Design の基本的な概念に関して知りたい方は <a href="https://twitter.com/brad_frost" target="_blank" rel="external">Brad Frost</a> 氏の<a href="http://bradfrost.com/blog/post/atomic-web-design/" target="_blank" rel="external">原文</a>、もしくは私の以前の記事↓を参照できます。</p>
+<p><a href="http://ygoto3.com/posts/smashing-conference-whistler-and-atomic-design/">最近よくクリエイターが移住するカナダで Atomic Design を学ぶ</a></p>
+<h2>Atomic Design を導入して正解</h2>
+<p>結論から書くと、今回 Atomic Design を導入したことは正解でした。コンポーネントの粒度を論理的に説明できるガイドラインとして十分すぎるほどの役割を果たしてくれました。</p>
+<p>このガイドラインがあることで、デザインに関してさほど関心がない人（たとえばデザインよりもエンジニアリングが好きなフロントエンドエンジニアなど）でも、UI コンポーネントの粒度を考えるフレームワークとなります。</p>
+<p>もちろん、Atomic Design でなくても、コンポーネントの粒度を決定する基準が個人の感覚に依存することが避けられれば、どんなものでも構わないと思います。</p>
+<h2>Atoms や Molecules はデザイン仕様の変化に強い</h2>
+<p>Atomic Design を導入する目的は、デザイン仕様の変更に強く、再利用性がコンポーネント郡を揃えることです。当然のことですが、粒度が小さく特定のコンテキストに依存しないコンポーネントは少しくらい UI デザインに変更が入ったとしても、そのまま再利用することが可能です。</p>
+<p>内製で自社サービスを開発していることもあり、今回のプロジェクトではデザインの変更は日常的に発生しました。そのためコンポーネントは将来的なデザイン変更を見越した上で、現在のデザインカンプ上に見えるコンテキストにできる限り依存しないように注意してコンポーネントを作ることが重要です。</p>
+<p>Atomic Design の 5 つのカテゴライズの中で Atoms や Molecules はコンテキストが極めて薄いコンポーネントです。コンポーネントを作る際に常に Atoms や Molecules の粒度で作るとどういうコンポーネントが理想かを意識することが変更に強い UI コンポーネント郡を備えていくことにつながっていきます。</p>
+<h2>デザイナーに Atomic Design の導入に協力してもらうことの難しさ</h2>
+<p>ここまで書いてきたとおり、コンポーネントベースの開発はフロントエンドにとってはメリットが多いですが、Atomic Design はその名前の通りデザイン手法なので、導入においてもフロントエンドだけで完結するものではなく、デザイナーに協力してもらうことが不可欠です。（今回のプロジェクトでは、デザインとフロントエンドエンジニアリングは分業でした。）</p>
+<p>しかし残念ながら、コンポーネントベースのデザインというのは一般的にマークアップをしないデザイナーにとっては作業しづらいものです。画面上でほかのコンポーネントと一緒にレイアウトされたときに、そのコンポーネントがどのように見えるのかをイメージすることは、かなりベテランで腕の良いデザイナーでも難しいです。</p>
+<p>Atomic Design のようなコンポーネントベースのデザインプロセスをデザイナーに協力してもらうのは大きな課題です。</p>
+<h2>Interface Inventory を開発初期から実践</h2>
+<p>この課題を解決するために、開発の初期段階から Brad Frost 氏が提唱している <a href="http://bradfrost.com/blog/post/interface-inventory/" target="_blank" rel="external">Interface Inventory</a> をゆるく実践していきました。</p>
+<p>Interface Inventory を実践したと言っても変わったことや難しいことをやったわけではなく、デザイナーには画面ごとのデザインカンプを通常通り作ってもらい、フロントエンドはそのカンプからいきなり画面を実装するのではなく、まず必要なコンポーネントを切り出して、コンポーネントリストを作成しました。</p>
+<h2>Atomic Design でカテゴライズしたコンポーネントリスト</h2>
+<p><img src="/images/atomic-design-on-actual-project/component-list.png" alt="Atomic Design でカテゴライズしたコンポーネントリスト"></p>
+<p>このコンポーネントリストは <a href="http://patternlab.io/" target="_blank" rel="external">Pattern Lab</a> のように Atoms や Molecules といったコンポーネントの粒度でカテゴライズされた状態で、デザイナーに共有します。（Git 上で例えば master にマージされたら、自動で最新のコンポーネントリストが開発チーム全体で共有されるようデプロイされるようにしておくと良いかと思います。）</p>
+<p>デザイナーには次からの画面デザインを考える際、リストにあるコンポーネントを見て可能な場合はそれらを使ってもらうよう協力してもらいます。UI のトーンがブレないようにスタイルガイドを作っているデザイナーの方もいると思いますので、スタイルガイドと同じように使用してもらえると一番良いです。</p>
+<p>コンポーネントが再利用できた方が実装工数が減り、コード量も少なくなるためバグも減り、プロダクトのパフォーマンスも上がるのでプロダクトにとってのメリットも大きいので、その点も伝えるのですが、デザイナーにとってはイメージがつきにくい場合もあるので、まずはスタイルガイドと同じように使ってもらうように促すのが一番なのかなと思います。</p>
+<h2>開発初期はコンポーネントリストの Atoms や Molecules を増やす</h2>
+<p>前述したとおり、Atoms や Molecules はデザイン仕様の変更に強いので、コンポーネントリストでも Atoms や Molecules を増やし、Atoms や Molecules から Organisms を構成することを意識します。</p>
+<p>作ったコンポーネントたちがカテゴリー別に一覧化されていると、粒度のバランスが取れているかを意識しやすくなります。例えば Atoms や Molecules にそぐわない、ある一定のコンテキストに強く影響されたコンポーネントがないかレビューしやすくなります。</p>
+<p>デザインカンプからコンポーネントを抜き出すので、実装者はその画面デザインが意図しているコンテキストに非常に影響されやすいです。そのコンテキストの一層下に UI コンポーネントが共通で持っている目的があるはずなので、その共通の目的以上のものが機能に含まれていないかをレビュー時に確認し、適切に Organisms などにコンポーネントを分離することが大切です。</p>
+<p>実際に開発中盤以降もデザイン変更が頻発しましたが、Organisms 以上のコンポーネントはその変更により修正が発生しますが、Atoms や Molecules に関しては、ほとんど発生しませんでした。</p>
+<h2>コンポーネントリストとプロダクトのコンポーネントの同期</h2>
+<p>コンポーネントリストやスタイルガイドを運用する上で陥りやすい問題として、開発が佳境に入るとコンポーネントリストが更新されないことが多々起こりえます。プロダクトの方に開発の意識が集中しているので、それは当然ですが、コンポーネントリストが常に更新されなければ、いづれデザイナー含めチーム全体がコンポーネントリストを参照しなくなります。</p>
+<p>コンポーネントリストを「生きたドキュメント」として保ち続けるために、コンポーネントリストの中のコンポーネントとプロダクトで使われているコンポーネントの実装が同じソースを見ていることが重要です。</p>
+<p>今であれば、コンポーネント化を助けるライブラリとして <a href="https://facebook.github.io/react/" target="_blank" rel="external">React</a> などを利用できると思います。今回のプロジェクトでは、 React で作成したコンポーネントをコンポーネントリストにもレンダリングしているため、プロダクトのコンポーネントとずれることがありません。</p>
+<p>今回のプロジェクトでも、React + <a href="https://github.com/alexlande/react-style-guide" target="_blank" rel="external">alexlande/react-style-guide</a> を利用してコンポーネントリストを作成し、プロダクト上にあるコンポーネントと同期されるようにしました。</p>
+<h2>正しくコンポーネントを分離すれば、デザイナーが安心してコンポーネントに対してプルリクすることも可能</h2>
+<p>Atomic Design に限らず、コンポーネントを正しく分離するということは、デザインとして正しく論理的な意味を持ったコンポーネントとして設計することになります。サービス上で統一された正しい意味合いの色が適用されていて、コンポーネント単体が必要以上でも以下でもないマージン情報を持ち、どこにレイアウトされても自分以外を影響することのないように心掛ける必要があります。</p>
+<p>スタイルがそのコンポーネント以外に影響しない状況が保持されていれば、アプリケーションの実装全体をそれほど把握していなくても、安心してコンポーネントに変更をかけることができます。それはフロントエンドエンジニアでなくても、デザイナーやほかの職種の人が実装に関わることができることを意味しています。</p>
+<h2>デザイン変更実装をデザイナー自身がプルリク</h2>
+<p>頻繁に変更するデザインには、簡単な色やラベリングの変更、余白の調整などが含まれます。これらの変更は作業的にはとても簡単なものですが、デザイナーがデザインカンプに対して変更したものをフロントエンジニアに渡して作業する場合は、そこそこの工数がかかります。</p>
+<p>まずフロントエンドが実装したものをデザイナーに確認してもらう作業は二者のコミュニケーションが発生するため、確認が必要なときに他方の時間が空いているとは限りません。簡単な修正なので、デザイナーの確認が必要でないと思っていても、デザインカンプ上では良く見えていたものが、実際に実装されたら調整が必要だったということは多々起こりえます。残念ながら、デザイナーにしか気づけないもの点が存在するのは事実です。</p>
+<p>また、実装したものを Pull Request すれば、ほかのフロントエンドエンジニアがレビューすることになると思いますが、その際にレビューできるのはコードに関することのみだったりします。（そして、これらのデザイン修正ではコードに関しては指摘する必要がないことの方が多いと思います。）</p>
+<p>上記の 2 点は、デザイン変更に関する実装についてデザイナー自身が Pull Request することができると、工数をぐっと削減できます。デザイナー自身が実装しているため、実装後のデザイン確認作業は 1 者のみで済みます。また、Pull Request に対して、フロントエンドはコードのみをレビューすれば良くなります。</p>
+<p>基本的な Git の使い方をデザイナーに学んでもらう必要はありましたが、デザイナーにとっても自分の意図を他人にフィルタリングされることなくプロダクトに反映できるので、デザイナー自身が Pull Request できることは大きなメリットがありました。</p>
+<h2>Atoms / Molecules / Organisms のみを採用</h2>
+<p>Brad Frost 氏の Atomic Design では 5 つのカテゴリー（ Atoms / Molecules / Organisms / Templates / Pages ）が紹介されていますが、今回のプロジェクトでは最初の 3 カテゴリー（ Atoms / Molecules / Organisms ）のみを管理しました。</p>
+<p>今回のプロジェクトでは、Templates のような大きな粒度のものを再利用することがありませんでした。Templates と Pages については、何百や何千とページを量産するような案件の場合はコンポーネントリストなどで管理した方が良いように思いますが、そうでない場合は Atomic Design のカテゴリーから Atoms / Molecules / Organisms だけを採用するのも良いかと思います。</p>
+<p>もちろん実際には Templates の役割をしている大きなコンポーネントは存在しているのですが、プロダクト上のみで確認できるだけで事足りるように個人的には思いました。</p>
+<h2>考え方に名前があると受け入れやすい</h2>
+<p>Atomic Design の良いところは、名前が分かりやすく、概念的にも難しいところがないことだと思います。（逆に悪いところは、カテゴリーの名前が若干恥ずかしいことかなと思います。「この Molecule が...」とかチームメンバーに言うのは最初は抵抗がありました - これについては <a href="https://twitter.com/t32k" target="_blank" rel="external">t32k</a> さんも予想してましたが。）</p>
+<p>今回のプロジェクトでは、チームの半分弱がフロントエンド経験がないメンバーでしたが、Atomic Design の基本的なコンセプトはすんなり取り込めたようでした。</p>
+<p>Atomic Design 自体は特に斬新な考え方なわけではなく、従来のコンポーネントを作る上でのふわっとした考え方に面白い名前がついただけですが、名前がついていることで認識の共有が加速する良い例だと思います。</p>
+<h2>結果</h2>
+<p>Atomic Design の考え方を借りて、コンポーネントの粒度を決定していった結果、以前より再利用性が高いコンポーネントを作ることができました。もちろん、Atomic Design だけではなく、コンポーネントベースのデザインプロセスに協力してくれたデザイナーのおかげもあります。（今回前向きにコンポーネントベースのデザインプロセスに協力してくれた <a href="https://twitter.com/pekep" target="_blank" rel="external">@pekep</a> に感謝。）</p>
+<p>そして、適切なコンポーネントを分離できた結果、デザイナーがデザイン後の開発に参加できるという副産物も得ることができました。</p>
+</div><div class="post__share"><a href="https://twitter.com/share" data-text="Atomic Design を実案件に導入 - UI コンポーネントの粒度を明確化した結果と副産物" data-url="https://ygoto3.com/posts/atomic-design-on-actual-project/" data-via="ygoto3_" class="twitter-share-button">Tweet</a><script>!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0],p=/^http:/.test(d.location)?'http':'https';if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src=p+'://platform.twitter.com/widgets.js';fjs.parentNode.insertBefore(js,fjs);}}(document, 'script', 'twitter-wjs');
+</script><div data-href="https://ygoto3.com/posts/atomic-design-on-actual-project/" data-layout="button" class="fb-share-button"></div></div></article></div><footer class="pure-u-1"><div class="container-footer"><div class="footer"><div class="pure-g"><div class="pure-u"><img src="/images/ygoto3-avatar.jpg" width="80" height="80" class="footer__avatar"/></div><div class="pure-u-3-4"><a href="/"><h2 class="site-title">ygoto3.com</h2></a><p class="copyright footer__copyright">&copy; 2016&nbsp;Yusuke Goto<a href="https://twitter.com/ygoto3_" class="copyright__icon"><i class="fa fa-lg fa-twitter-square"></i></a><a href="/atom.xml" class="copyright__icon"><i class="fa fa-lg fa-rss-square"></i></a></p></div></div></div></div></footer><script src="/js/app.js"></script></body></html>
